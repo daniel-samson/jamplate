@@ -672,6 +672,41 @@ public class ProjectFile {
     }
 
     /**
+     * Saves variables to the variables.xml file.
+     * 
+     * @param variables The list of variables to save
+     * @throws IOException if there is an error writing to the file
+     */
+    public void saveVariables(javafx.collections.ObservableList<Variable> variables) throws IOException {
+        if (variablesFilePath == null || variablesFilePath.isEmpty()) {
+            throw new IOException("Variables file path is not set");
+        }
+
+        try {
+            // Create a Variables instance
+            Variables.VariableList varList = new Variables.VariableList(new ArrayList<>(variables));
+            Variables vars = new Variables();
+            vars.setVariableList(varList);
+
+            // Create JAXB context
+            JAXBContext context = JAXBContext.newInstance(Variables.class);
+            Marshaller marshaller = context.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+            // Create the file if it doesn't exist
+            Path path = Paths.get(variablesFilePath);
+            if (!Files.exists(path.getParent())) {
+                Files.createDirectories(path.getParent());
+            }
+
+            // Save the variables
+            marshaller.marshal(vars, path.toFile());
+        } catch (JAXBException e) {
+            throw new IOException("Failed to save variables: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * JAXB wrapper class for the variables list.
      */
     @XmlRootElement(name = "jamplate")

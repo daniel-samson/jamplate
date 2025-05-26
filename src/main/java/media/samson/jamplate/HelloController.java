@@ -404,7 +404,7 @@ public class HelloController {
      * 
      * @param message The success message to display
      */
-    private void showSuccessMessage(String message) {
+    protected void showSuccessMessage(String message) {
         // Try to find a label in the status bar
         Label statusLabel = (Label) statusBar.getChildren().stream()
             .filter(node -> node instanceof Label)
@@ -460,7 +460,7 @@ public class HelloController {
      * Shows a dialog to select a project directory and loads the project if it exists.
      */
     @FXML
-    private void handleOpen() {
+    protected void handleOpen() {
         // Get the owner window
         Window owner = btnOpen.getScene().getWindow();
         
@@ -486,7 +486,7 @@ public class HelloController {
      * @param directory The directory to check
      * @return true if a project file exists, false otherwise
      */
-    private boolean projectExistsInDirectory(String directory) {
+    protected boolean projectExistsInDirectory(String directory) {
         // Check for project.xml file in the directory
         String projectFilePath = Paths.get(directory, "project.xml").toString();
         return Files.exists(Paths.get(projectFilePath));
@@ -497,7 +497,7 @@ public class HelloController {
      * 
      * @param directory The directory containing the project
      */
-    private void loadProjectFromDirectory(String directory) {
+    protected void loadProjectFromDirectory(String directory) {
         // Try to open project file from directory
         String projectFilePath = Paths.get(directory, "project.xml").toString();
         ProjectFile loadedProject = ProjectFile.open(projectFilePath);
@@ -532,7 +532,7 @@ public class HelloController {
      * 
      * @param directory The directory where the new project would be created
      */
-    private void showCreateNewProjectPrompt(String directory) {
+    protected void showCreateNewProjectPrompt(String directory) {
         Alert alert = new Alert(
             AlertType.CONFIRMATION,
             "No project found in the selected directory. Would you like to create a new project?",
@@ -560,7 +560,7 @@ public class HelloController {
      * 
      * @param directory The directory to pre-populate in the dialog
      */
-    private void showCreateProjectDialogWithLocation(String directory) {
+    protected void showCreateProjectDialogWithLocation(String directory) {
         Window owner = btnOpen.getScene().getWindow();
         CreateProjectDialog dialog = new CreateProjectDialog(owner);
         
