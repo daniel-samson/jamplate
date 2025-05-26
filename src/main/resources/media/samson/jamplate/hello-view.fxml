@@ -9,38 +9,37 @@
     <VBox>
       <MenuBar>
         <menus>
-          <Menu text="File">
+          <Menu text="_File">
             <items>
-              <MenuItem fx:id="menuNew" text="New" />
-              <MenuItem fx:id="menuOpen" text="Open..." />
-              <MenuItem fx:id="menuSave" text="Save" />
+              <MenuItem fx:id="menuNew" text="_New" accelerator="shortcut+N" />
+              <MenuItem fx:id="menuOpen" text="_Open..." accelerator="shortcut+O" />
+              <MenuItem fx:id="menuSave" text="_Save" accelerator="shortcut+S" />
               <SeparatorMenuItem />
               <MenuItem text="Exit" />
             </items>
           </Menu>
 
-          <Menu text="Edit">
-            <items>
-              <MenuItem text="Undo" />
-              <MenuItem text="Redo" />
+          <Menu text="_Edit">            <items>
+              <MenuItem fx:id="menuUndo" text="_Undo" accelerator="shortcut+Z" onAction="#handleUndo" />
+              <MenuItem fx:id="menuRedo" text="_Redo" onAction="#handleRedo" />
               <SeparatorMenuItem />
-              <MenuItem fx:id="menuCut" text="Cut" />
-              <MenuItem fx:id="menuCopy" text="Copy" />
-              <MenuItem fx:id="menuPaste" text="Paste" />
+              <MenuItem fx:id="menuCut" text="Cu_t" accelerator="shortcut+X" />
+              <MenuItem fx:id="menuCopy" text="_Copy" accelerator="shortcut+C" />
+              <MenuItem fx:id="menuPaste" text="_Paste" accelerator="shortcut+V" />
             </items>
           </Menu>
 
-          <Menu text="View">
+          <Menu text="_View">
             <items>
-              <CheckMenuItem text="Show Toolbar" selected="true"/>
-              <CheckMenuItem text="Show Status Bar" selected="true"/>
+              <CheckMenuItem text="Show _Toolbar" selected="true"/>
+              <CheckMenuItem text="Show _Status Bar" selected="true"/>
             </items>
           </Menu>
 
-          <Menu text="Help">
+          <Menu text="_Help">
             <items>
-              <MenuItem text="View Help" />
-              <MenuItem text="About" />
+              <MenuItem text="_View Help" accelerator="F1" />
+              <MenuItem text="_About" />
             </items>
           </Menu>
         </menus>

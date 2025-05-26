@@ -5,6 +5,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
+import javafx.application.Platform;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
@@ -25,6 +26,8 @@ public class HelloController {
     @FXML private MenuItem menuCut;
     @FXML private MenuItem menuCopy;
     @FXML private MenuItem menuPaste;
+    @FXML private MenuItem menuUndo;
+    @FXML private MenuItem menuRedo;
 
     @FXML
     public void initialize() {
@@ -62,9 +65,50 @@ public class HelloController {
         menuCopy.setGraphic(menuCopyGlyph);
         menuPaste.setGraphic(menuPasteGlyph);
 
-        // Optional: Set tooltips
-        btnNew.setTooltip(new Tooltip("New File"));
-        btnOpen.setTooltip(new Tooltip("Open File"));
-        btnSave.setTooltip(new Tooltip("Save File"));
+        // Set tooltips with platform-specific keyboard shortcuts
+        String ctrlKey = getPlatformSpecificCtrlKey();
+        
+        btnNew.setTooltip(new Tooltip("New File (" + ctrlKey + "+N)"));
+        btnOpen.setTooltip(new Tooltip("Open File (" + ctrlKey + "+O)"));
+        btnSave.setTooltip(new Tooltip("Save File (" + ctrlKey + "+S)"));
+        btnCut.setTooltip(new Tooltip("Cut (" + ctrlKey + "+X)"));
+        btnCopy.setTooltip(new Tooltip("Copy (" + ctrlKey + "+C)"));
+        btnPaste.setTooltip(new Tooltip("Paste (" + ctrlKey + "+V)"));
+        
+        // Set platform-specific Redo shortcut (no tooltip needed for menu items)
+        if (isMac()) {
+            // On Mac, Redo is typically Cmd+Shift+Z
+            menuRedo.setAccelerator(javafx.scene.input.KeyCombination.valueOf("shortcut+shift+Z"));
+        } else {
+            // On Windows/Linux, Redo is typically Ctrl+Y
+            menuRedo.setAccelerator(javafx.scene.input.KeyCombination.valueOf("shortcut+Y"));
+        }
+    }
+    
+    @FXML
+    private void handleUndo() {
+        System.out.println("Undo action triggered");
+        // Implement actual undo logic here
+    }
+    
+    @FXML
+    private void handleRedo() {
+        System.out.println("Redo action triggered");
+        // Implement actual redo logic here
+    }
+    
+    /**
+     * Returns the platform-specific control key symbol
+     */
+    private String getPlatformSpecificCtrlKey() {
+        return isMac() ? "⌘" : "Ctrl";
+    }
+    
+    /**
+     * Checks if the current platform is macOS
+     */
+    private boolean isMac() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        return osName.contains("mac");
     }
 }
