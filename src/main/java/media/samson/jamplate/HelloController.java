@@ -11,6 +11,8 @@ import javafx.scene.paint.Color;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
@@ -139,32 +141,54 @@ public class HelloController {
             System.out.println("Location: " + directory);
             System.out.println("Project Name: " + projectName);
             
-            // Create the ProjectFile directly as the class property
-            projectFile = new ProjectFile(projectName, directory);
-            boolean saveResult = projectFile.save();
-            
-            if (saveResult) {
-                // Store the file path for reference
-                String projectFilePath = projectFile.getProjectFilePath();
-                
-                // Reload the project using open() (this method will be enhanced later)
-                projectFile = ProjectFile.open(projectFilePath);
-                
-                if (projectFile != null) {
-                    // Update UI to reflect the new project
-                    updateUIForProject();
-                    System.out.println("Project file created successfully at: " + projectFilePath);
-                } else {
-                    // TODO: Show error dialog
-                    System.err.println("Failed to open project file after creation.");
-                }
-            } else {
-                // Reset the property since save failed
-                projectFile = null;
-                // TODO: Show error dialog
-                System.err.println("Failed to create project file.");
-            }
+            handleNewProjectInternal(directory, projectName);
         });
+    }
+    
+    /**
+     * Internal method to handle new project creation.
+     * Extracted for better testability.
+     * 
+     * @param directory The directory where the project will be created
+     * @param projectName The name of the project
+     */
+    private void handleNewProjectInternal(String directory, String projectName) {
+        // Create the ProjectFile directly as the class property
+        projectFile = createProjectFile(projectName, directory);
+        boolean saveResult = projectFile.save();
+        
+        if (saveResult) {
+            // Store the file path for reference
+            String projectFilePath = projectFile.getProjectFilePath();
+            
+            // Reload the project using open() (this method will be enhanced later)
+            projectFile = ProjectFile.open(projectFilePath);
+            
+            if (projectFile != null) {
+                // Update UI to reflect the new project
+                updateUIForProject();
+                System.out.println("Project file created successfully at: " + projectFilePath);
+            } else {
+                // Show error dialog for file opening failure
+                showErrorDialog(
+                    "Error Opening Project", 
+                    "Project File Error", 
+                    "Failed to open the project file after creation. The file may be corrupted or inaccessible."
+                );
+                System.err.println("Failed to open project file after creation.");
+            }
+        } else {
+            // Reset the property since save failed
+            projectFile = null;
+            
+            // Show error dialog for file saving failure
+            showErrorDialog(
+                "Error Creating Project", 
+                "Project Creation Failed", 
+                "Failed to create the project file. Please check if you have write permissions to the specified location."
+            );
+            System.err.println("Failed to create project file.");
+        }
     }
 
     @FXML
@@ -224,6 +248,21 @@ public class HelloController {
     private void updateUIForProject() {
         boolean hasProject = (projectFile != null);
         
+        // Ensure we're on the JavaFX application thread for UI updates
+        if (Platform.isFxApplicationThread()) {
+            updateUIComponents(hasProject);
+        } else {
+            Platform.runLater(() -> updateUIComponents(hasProject));
+        }
+    }
+    
+    /**
+     * Updates UI components based on whether a project is loaded.
+     * Must be called on the JavaFX application thread.
+     * 
+     * @param hasProject true if a project is loaded, false otherwise
+     */
+    private void updateUIComponents(boolean hasProject) {
         // Enable/disable project-specific actions based on whether a project is loaded
         btnSave.setDisable(!hasProject);
         menuSave.setDisable(!hasProject);
@@ -235,5 +274,38 @@ public class HelloController {
                 ((Stage) window).setTitle("Jamplate - " + projectFile.getProjectName());
             }
         }
+    }
+    
+    /**
+     * Shows an error dialog with the specified details.
+     * 
+     * @param title The title of the error dialog
+     * @param headerText The header text of the error dialog
+     * @param contentText The content text of the error dialog
+     */
+    protected void showErrorDialog(String title, String headerText, String contentText) {
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(headerText);
+        alert.setContentText(contentText);
+        
+        // Set the owner window for the dialog
+        if (btnNew.getScene() != null && btnNew.getScene().getWindow() != null) {
+            alert.initOwner(btnNew.getScene().getWindow());
+        }
+        
+        alert.showAndWait();
+    }
+    
+    /**
+     * Creates a new ProjectFile instance.
+     * Extracted for better testability.
+     * 
+     * @param projectName The name of the project
+     * @param directory The directory where the project will be created
+     * @return A new ProjectFile instance
+     */
+    protected ProjectFile createProjectFile(String projectName, String directory) {
+        return new ProjectFile(projectName, directory);
     }
 }
