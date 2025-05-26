@@ -3,6 +3,7 @@ package media.samson.jamplate;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.scene.control.Alert;
@@ -29,6 +30,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+
 import org.controlsfx.control.action.Action;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
@@ -42,11 +44,16 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class HelloController {
     /**
@@ -438,7 +445,350 @@ public class HelloController {
             });
         }
     }
+
+    @FXML
+    private void handleExport() {
+        // Check if we have an open project
+        if (projectFile == null) {
+            showErrorDialog(
+                "Export Error",
+                "No Project Open",
+                "There is no project currently open to export."
+            );
+            return;
+        }
+
+        // Get the owner window
+        Window owner = menuSave.getParentPopup().getOwnerWindow();
+        
+        // Create and show the export dialog
+        ExportDialog dialog = new ExportDialog(owner);
+        dialog.showAndWait().ifPresent(exportSettings -> {
+            try {
+                String csvFile = exportSettings.getCsvFile();
+                String exportDirectory = exportSettings.getExportDirectory();
+
+                // Validate export directory exists
+                File directory = new File(exportDirectory);
+                if (!directory.exists() || !directory.isDirectory()) {
+                    showErrorDialog(
+                        "Export Error",
+                        "Invalid Export Directory",
+                        "The specified export directory does not exist."
+                    );
+                    return;
+                }
+
+                // Load the CSV file
+                CsvImport csvImport = new CsvImport(new File(csvFile));
+                
+                // Load the template content
+                String templateContent;
+                try {
+                    templateContent = Files.readString(Paths.get(projectFile.getTemplateFilePath()));
+                } catch (IOException e) {
+                    showErrorDialog(
+                        "Export Error",
+                        "Template Loading Failed",
+                        "Failed to load the template file: " + e.getMessage()
+                    );
+                    return;
+                }
+
+                // Extract required variables from template
+                Set<String> requiredVariables = extractTemplateVariables(templateContent);
+                
+                // Get CSV headers
+                List<String> csvHeaders = csvImport.getHeaders();
+                
+                // Check if all required variables are present in CSV or project variables
+                List<String> missingVariables = new ArrayList<>();
+                for (String var : requiredVariables) {
+                    boolean isInCsv = csvHeaders.contains(var);
+                    boolean isInProject = variables.stream()
+                        .anyMatch(v -> v.getName().equals(var));
+                    boolean isSpecialVar = var.equals("JamplateProjectName") || 
+                                          var.equals("JamplateDocumentCreateAt");
+                    
+                    if (!isInCsv && !isInProject && !isSpecialVar) {
+                        missingVariables.add(var);
+                    }
+                }
+                
+                // Show error if any required variables are missing
+                if (!missingVariables.isEmpty()) {
+                    showErrorDialog(
+                        "Export Error",
+                        "Missing Required Variables",
+                        "The following variables are required by the template but not found in the CSV or project variables:\n" +
+                        String.join("\n", missingVariables)
+                    );
+                    return;
+                }
+
+                // Set up template engine
+                MyTemplateEngine templateEngine = new MyTemplateEngine();
+                templateEngine.setTemplate(templateContent);
+
+                // Get current timestamp for unique filenames
+                String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+                    .format(LocalDateTime.now());
+
+                // Get list of records and create progress dialog
+                List<Map<String, String>> records = csvImport.getRecords();
+                final int totalRecords = records.size();
+                final String templateName = new File(projectFile.getTemplateFilePath()).getName();
+                
+                // Create progress dialog
+                ProgressDialog progressDialog = new ProgressDialog(owner);
+                
+                // Create background task for processing
+                Task<Void> exportTask = new Task<>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        // Initialize progress
+                        updateProgress(0, totalRecords);
+                        updateMessage(String.format("Starting to process %d records using template: %s", 
+                            totalRecords, templateName));
+                        
+                        // Process records with index tracking
+                        for (int i = 0; i < records.size(); i++) {
+                            if (isCancelled()) {
+                                break;
+                            }
+
+                            Map<String, String> record = records.get(i);
+                            
+                            // Add template variables
+                            Map<String, String> templateVars = new HashMap<>();
+                            templateVars.putAll(record);
+                            
+                            // Add project variables (only if not already set by CSV)
+                            for (Variable var : variables) {
+                                if (!templateVars.containsKey(var.getName())) {
+                                    templateVars.put(var.getName(), var.getValue());
+                                }
+                            }
+                            
+                            // Add special variables (1-based record index)
+                            int currentRecord = i + 1;
+                            templateVars.put("JamplateProjectName", projectFile.getProjectName());
+                            templateVars.put("JamplateDocumentCreateAt", timestamp);
+                            templateVars.put("JamplateRecordIndex", String.valueOf(currentRecord));
+                            templateVars.put("JamplateRecordIndexPadded", String.format("%04d", currentRecord));
+                            
+                            try {
+                                // Process template with variables (convert Map to HashMap)
+                                String processedContent = templateEngine.build(new HashMap<>(templateVars));
+                                
+                                // Generate filename using available patterns and variables
+                                String outputFileName;
+                                try {
+                                    // Check for filename template variable
+                                    Variable filenameTemplate = variables.stream()
+                                        .filter(v -> v.getName().equals("JamplateOutputFileName"))
+                                        .findFirst()
+                                        .orElse(null);
+                                    
+                                    if (filenameTemplate != null) {
+                                        // Process filename template with variables
+                                        MyTemplateEngine filenameEngine = new MyTemplateEngine();
+                                        filenameEngine.setTemplate(filenameTemplate.getValue());
+                                        outputFileName = filenameEngine.build(new HashMap<>(templateVars));
+                                    } else if (record.containsKey("filename")) {
+                                        // Use filename field from CSV if available
+                                        outputFileName = record.get("filename");
+                                    } else if (record.containsKey("name")) {
+                                        // Fall back to name field if available
+                                        outputFileName = record.get("name");
+                                    } else {
+                                        // Use timestamp and padded index as fallback
+                                        outputFileName = String.format("%s_%s",
+                                            timestamp,
+                                            templateVars.get("JamplateRecordIndexPadded")
+                                        );
+                                    }
+                                    
+                                    // Add file extension if not already present
+                                    // Get file extension using switch on template type
+                                    String extension = switch (projectFile.getTemplateFileType()) {
+                                        case HTML_FILE -> ".html";
+                                        case PHP_FILE -> ".php";
+                                        case TXT_FILE -> ".txt";
+                                        default -> ".txt";
+                                    };
+                                    if (!outputFileName.toLowerCase().endsWith(extension.toLowerCase())) {
+                                        outputFileName += extension;
+                                    }
+                                    
+                                    // Sanitize filename (enhanced version)
+                                    outputFileName = sanitizeFileName(outputFileName);
+                                    
+                                } catch (Exception e) {
+                                    throw new IOException("Error generating output filename: " + e.getMessage(), e);
+                                }
+                                
+                                // Save to output file
+                                Path outputPath = Paths.get(exportDirectory, outputFileName);
+                                Files.writeString(outputPath, processedContent);
+                                
+                                // Update progress
+                                updateProgress(currentRecord, totalRecords);
+                                
+                                // Create progress message
+                                String currentFile = new File(outputFileName).getName();
+                                double progress = (double) currentRecord / totalRecords;
+                                updateMessage(String.format("Generated file %d of %d (%d%%): %s",
+                                    currentRecord,
+                                    totalRecords,
+                                    (int)(progress * 100),
+                                    currentFile));
+                                
+                            } catch (Exception e) {
+                                // Handle error for current record
+                                String errorMsg = String.format("Error processing record %d of %d: %s",
+                                    currentRecord,
+                                    totalRecords,
+                                    e.getMessage());
+                                
+                                // Log error and update message
+                                System.err.println("Export error: " + errorMsg);
+                                updateMessage(String.format("[Warning] Failed to process record %d: %s (Continuing...)",
+                                    currentRecord,
+                                    e.getMessage()));
+                                
+                                // Pause briefly to show error message
+                                Thread.sleep(1500);
+                            }
+                        }
+                        
+                        // Final progress update
+                        updateProgress(totalRecords, totalRecords);
+                        updateMessage("Export completed successfully.");
+                        return null;
+                    }
+                };
+
+                // Set up progress dialog with task
+                progressDialog.setTask(exportTask);
+                
+                // Start the export task in a daemon thread
+                Thread exportThread = new Thread(exportTask, "ExportThread");
+                exportThread.setDaemon(true);
+                exportThread.start();
+                
+                // Show progress dialog and wait for completion
+                progressDialog.showAndWait();
+                
+                // Show completion message based on task state
+                if (!exportTask.isCancelled()) {
+                    showSuccessMessage(String.format("Successfully exported %d files using template '%s' in '%s'", 
+                        totalRecords, 
+                        templateName,
+                        new File(exportDirectory).getName()));
+                } else {
+                    // Show number of completed records at cancellation
+                    int completedRecords = (int)Math.ceil(exportTask.getProgress() * totalRecords);
+                    showSuccessMessage(String.format("Export cancelled after processing %d of %d files", 
+                        completedRecords,
+                        totalRecords));
+                }
+            } catch (IOException e) {
+                showErrorDialog(
+                    "Export Error",
+                    "Export Failed",
+                    "An error occurred while exporting: " + e.getMessage()
+                );
+                System.err.println("Error during export: " + e.getMessage());
+            } catch (IllegalArgumentException e) {
+                showErrorDialog(
+                    "Export Error",
+                    "Invalid CSV File Format",
+                    "Failed to process the CSV file. Please ensure it has a header row and valid data:\n" + e.getMessage()
+                );
+                System.err.println("Error with CSV file: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Sanitizes a filename by removing or replacing invalid characters.
+     * 
+     * @param filename The filename to sanitize
+     * @return A sanitized filename
+     */
+    /**
+     * Sanitizes a filename by removing or replacing invalid characters.
+     * Also handles length limitations and other platform-specific restrictions.
+     * 
+     * @param filename The filename to sanitize
+     * @return A sanitized filename
+     */
+    private String sanitizeFileName(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            throw new IllegalArgumentException("Filename cannot be null or empty");
+        }
+
+        // Replace invalid characters with underscores
+        String sanitized = filename.replaceAll("[\\\\/:*?\"<>|]", "_");
+        
+        // Replace multiple consecutive underscores with a single one
+        sanitized = sanitized.replaceAll("_+", "_");
+        
+        // Remove leading/trailing dots and spaces
+        sanitized = sanitized.replaceAll("^[. ]+|[. ]+$", "");
+        
+        // Ensure the filename isn't too long (common limit is 255 bytes)
+        if (sanitized.getBytes().length > 255) {
+            String extension = "";
+            int lastDot = sanitized.lastIndexOf('.');
+            if (lastDot > 0) {
+                extension = sanitized.substring(lastDot);
+                sanitized = sanitized.substring(0, lastDot);
+            }
+            
+            // Truncate the name part to fit within limits with the extension
+            while ((sanitized + extension).getBytes().length > 255) {
+                sanitized = sanitized.substring(0, sanitized.length() - 1);
+            }
+            
+            sanitized += extension;
+        }
+        
+        // If the filename is empty after sanitization, use a default name
+        if (sanitized.trim().isEmpty()) {
+            return "untitled";
+        }
+        
+        return sanitized;
+    }
     
+    /**
+     * Extracts variable names from template content.
+     * Looks for patterns like {{$variableName}} in the template.
+     *
+     * @param templateContent The template content to analyze
+     * @return A set of variable names (without the "$" prefix)
+     */
+    private Set<String> extractTemplateVariables(String templateContent) {
+        Set<String> variables = new HashSet<>();
+        int pos = 0;
+        
+        while ((pos = templateContent.indexOf("{{$", pos)) != -1) {
+            int endPos = templateContent.indexOf("}}", pos);
+            if (endPos != -1) {
+                // Extract variable name without {{$ and }}
+                String varName = templateContent.substring(pos + 3, endPos).trim();
+                variables.add(varName);
+                pos = endPos + 2;
+            } else {
+                break;
+            }
+        }
+        
+        return variables;
+    }
+
     @FXML
     private void handleExit() {
         // Check if there are unsaved changes

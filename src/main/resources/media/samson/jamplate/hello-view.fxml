@@ -17,6 +17,7 @@
               <MenuItem fx:id="menuSave" text="_Save" accelerator="shortcut+S" />
               <SeparatorMenuItem />
               <MenuItem fx:id="menuImportCSV" text="Import _Variables from CSV..." onAction="#handleImportCSV" />
+              <MenuItem fx:id="menuExport" text="_Export..." onAction="#handleExport" />
               <SeparatorMenuItem />
               <MenuItem fx:id="menuExit" text="E_xit" accelerator="shortcut+q" onAction="#handleExit" />
             </items>

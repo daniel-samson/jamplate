@@ -58,6 +58,13 @@ We'll add it back when project opening functionality is working.
             <version>2.0-M5</version>
         </dependency>
         
+        <!-- CSV handling -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+        
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
