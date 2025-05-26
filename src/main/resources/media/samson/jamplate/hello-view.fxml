@@ -11,9 +11,9 @@
         <menus>
           <Menu text="File">
             <items>
-              <MenuItem text="New" />
-              <MenuItem text="Open..." />
-              <MenuItem text="Save" />
+              <MenuItem fx:id="menuNew" text="New" />
+              <MenuItem fx:id="menuOpen" text="Open..." />
+              <MenuItem fx:id="menuSave" text="Save" />
               <SeparatorMenuItem />
               <MenuItem text="Exit" />
             </items>
@@ -24,9 +24,9 @@
               <MenuItem text="Undo" />
               <MenuItem text="Redo" />
               <SeparatorMenuItem />
-              <MenuItem text="Cut" />
-              <MenuItem text="Copy" />
-              <MenuItem text="Paste" />
+              <MenuItem fx:id="menuCut" text="Cut" />
+              <MenuItem fx:id="menuCopy" text="Copy" />
+              <MenuItem fx:id="menuPaste" text="Paste" />
             </items>
           </Menu>
 
