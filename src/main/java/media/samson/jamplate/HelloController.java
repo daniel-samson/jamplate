@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -18,6 +19,9 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -39,6 +43,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +82,9 @@ public class HelloController {
     @FXML private CodeArea templateEditor;
     
     private final ObservableList<Variable> variables = FXCollections.observableArrayList();
+    
+    // Context menu for autocomplete
+    private ContextMenu autocompleteMenu;
 
     @FXML
     public void initialize() {
@@ -188,6 +197,12 @@ public class HelloController {
         templateEditor.setParagraphGraphicFactory(LineNumberFactory.get(templateEditor));
         templateEditor.setWrapText(true);
         
+        // Initialize autocomplete menu
+        autocompleteMenu = new ContextMenu();
+        
+        // Add text change listener for autocomplete
+        setupTemplateEditorAutocomplete();
+        
         // Configure buttons based on selected tab
         mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab != null) {
@@ -228,6 +243,91 @@ public class HelloController {
         // Connect the Save menu item and toolbar button to the handleSave method
         btnSave.setOnAction(event -> handleSave());
         menuSave.setOnAction(event -> handleSave());
+    }
+    
+    /**
+     * Sets up the autocomplete functionality for the template editor.
+     * Detects when the user types "{{" and shows a popup with variable suggestions.
+     * Variables are inserted in the format {{$variableName}} when selected.
+     */
+    private void setupTemplateEditorAutocomplete() {
+        templateEditor.textProperty().addListener((observable, oldValue, newValue) -> {
+            // Check if we're in the template tab
+            if (!"Template".equals(mainTabPane.getSelectionModel().getSelectedItem().getText())) {
+                return;
+            }
+            
+            // Get cursor position
+            int caretPosition = templateEditor.getCaretPosition();
+            
+            // Check if we have enough characters before the cursor
+            if (caretPosition >= 2) {
+                // Get the two characters before the cursor
+                String lastTwoChars = newValue.substring(caretPosition - 2, caretPosition);
+                
+                // If the last two chars are "{{", show autocomplete
+                if ("{{".equals(lastTwoChars)) {
+                    showVariableAutocomplete();
+                }
+            }
+        });
+    }
+    
+    /**
+     * Shows the autocomplete popup with variable suggestions.
+     * When selected, variables will be inserted in the format {{$variableName}}
+     */
+    private void showVariableAutocomplete() {
+        // Clear existing items
+        autocompleteMenu.getItems().clear();
+        
+        // Add special variables
+        MenuItem projectNameItem = new MenuItem("JamplateProjectName");
+        projectNameItem.setOnAction(e -> insertVariable("JamplateProjectName"));
+        
+        MenuItem createDateItem = new MenuItem("JamplateDocumentCreateAt");
+        createDateItem.setOnAction(e -> insertVariable("JamplateDocumentCreateAt"));
+        
+        autocompleteMenu.getItems().addAll(projectNameItem, createDateItem);
+        
+        // Add user-defined variables
+        for (Variable var : variables) {
+            MenuItem item = new MenuItem(var.getName());
+            item.setOnAction(e -> insertVariable(var.getName()));
+            autocompleteMenu.getItems().add(item);
+        }
+        
+        // If no items, don't show the menu
+        if (autocompleteMenu.getItems().isEmpty()) {
+            return;
+        }
+        
+        // Position the menu at the cursor
+        // Get the caret bounds and compute the top-left position
+        javafx.geometry.Bounds caretBounds = templateEditor.getCaretBounds().get();
+        Point2D caretPos = new Point2D(caretBounds.getMinX(), caretBounds.getMinY());
+        Point2D screenPos = templateEditor.localToScreen(caretPos);
+        
+        autocompleteMenu.show(templateEditor, screenPos.getX(), screenPos.getY());
+    }
+    
+    /**
+     * Inserts a variable at the current cursor position in the format "{{$variableName}}".
+     * 
+     * @param variableName The name of the variable to insert
+     */
+    private void insertVariable(String variableName) {
+        // Get current position
+        int caretPosition = templateEditor.getCaretPosition();
+        
+        // Remove the "{{" that triggered the autocomplete
+        templateEditor.deleteText(caretPosition - 2, caretPosition);
+        
+        // Insert the variable with proper format: {{$variableName}}
+        templateEditor.insertText(caretPosition - 2, "{{$" + variableName + "}}");
+        
+        // Hide the autocomplete menu
+        autocompleteMenu.hide();
     }
     
     private void updateEditButtonStates(boolean isVariablesTab) {
