@@ -34,6 +34,7 @@ public class ProjectFile {
     private String projectFilePath;
     private String templateFilePath;
     private String sampleDataPath;
+    private String variablesFilePath;
     private TemplateFileType templateFileType;
     
     /**
@@ -46,6 +47,7 @@ public class ProjectFile {
         this.projectFilePath = "";
         this.templateFilePath = "";
         this.sampleDataPath = "";
+        this.variablesFilePath = "";
         this.templateFileType = null;
     }
     
@@ -85,6 +87,9 @@ public class ProjectFile {
         } else {
             this.templateFilePath = "";
         }
+        
+        // Set variables file path
+        this.variablesFilePath = projectPath.resolve("variables.xml").toString();
         
         // Initialize sample data path
         this.sampleDataPath = "";
@@ -237,6 +242,25 @@ public class ProjectFile {
     }
     
     /**
+     * Gets the variables file path.
+     * 
+     * @return The path to the variables file
+     */
+    @XmlElement(name = "variablesFile")
+    public String getVariablesFilePath() {
+        return variablesFilePath;
+    }
+    
+    /**
+     * Sets the variables file path.
+     * 
+     * @param variablesFilePath The new path to the variables file
+     */
+    public void setVariablesFilePath(String variablesFilePath) {
+        this.variablesFilePath = variablesFilePath;
+    }
+    
+    /**
      * Gets the template file type.
      * 
      * @return The template file type
@@ -333,6 +357,26 @@ public class ProjectFile {
         }
     }
     
+    /**
+     * Reads the variables template content from resources.
+     * 
+     * @return The variables template content
+     */
+    private String getResourceVariablesContent() {
+        String resourcePath = "/templates/variables.xml";
+        
+        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+            if (is == null) {
+                System.err.println("Warning: Variables template not found: " + resourcePath);
+                return "";
+            }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("Error reading variables template: " + e.getMessage());
+            return "";
+        }
+    }
+    
     @Override
     public String toString() {
         return "ProjectFile{" +
@@ -413,6 +457,30 @@ public class ProjectFile {
                         this.templateFilePath = templatePath.toString();
                         System.out.println("Template file already exists: " + templatePath);
                     }
+                }
+                
+                // Create variables.xml file
+                Path variablesPath = projectDirPath.resolve("variables.xml");
+                
+                // Get content from resource template
+                String variablesContent = getResourceVariablesContent();
+                
+                // Create variables file if it doesn't exist
+                if (!Files.exists(variablesPath)) {
+                    try {
+                        // Create the file and write the content
+                        Files.writeString(variablesPath, variablesContent, StandardCharsets.UTF_8);
+                        // Update variablesFilePath field with the new path
+                        this.variablesFilePath = variablesPath.toString();
+                        System.out.println("Created variables file: " + variablesPath);
+                    } catch (IOException e) {
+                        System.err.println("Error: Failed to create variables file: " + e.getMessage());
+                        // Continue with save even if variables file creation fails
+                    }
+                } else {
+                    // Update variablesFilePath field with existing path
+                    this.variablesFilePath = variablesPath.toString();
+                    System.out.println("Variables file already exists: " + variablesPath);
                 }
                 
                 // Log successful directory creation

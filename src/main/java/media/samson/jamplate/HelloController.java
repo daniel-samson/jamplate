@@ -3,12 +3,18 @@ package media.samson.jamplate;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.scene.control.Alert;
@@ -18,6 +24,8 @@ import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
 import org.controlsfx.glyphfont.GlyphFont;
 import org.controlsfx.glyphfont.GlyphFontRegistry;
+import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.LineNumberFactory;
 
 public class HelloController {
     /**
@@ -30,6 +38,8 @@ public class HelloController {
     @FXML private Button btnCut;
     @FXML private Button btnCopy;
     @FXML private Button btnPaste;
+    @FXML private Button addButton;
+    @FXML private Button removeButton;
     
     @FXML private MenuItem menuNew;
     @FXML private MenuItem menuOpen;
@@ -44,6 +54,12 @@ public class HelloController {
     @FXML private CheckMenuItem menuShowStatusBar;
     @FXML private ToolBar toolbar;
     @FXML private HBox statusBar;
+    
+    @FXML private TabPane mainTabPane;
+    @FXML private ListView<Variable> variableList;
+    @FXML private CodeArea templateEditor;
+    
+    private final ObservableList<Variable> variables = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -56,6 +72,8 @@ public class HelloController {
         Glyph cutGlyph = fontAwesome.create(FontAwesome.Glyph.CUT).size(16);
         Glyph copyGlyph = fontAwesome.create(FontAwesome.Glyph.COPY).size(16);
         Glyph pasteGlyph = fontAwesome.create(FontAwesome.Glyph.PASTE).size(16);
+        Glyph addGlyph = fontAwesome.create(FontAwesome.Glyph.PLUS).size(16);
+        Glyph removeGlyph = fontAwesome.create(FontAwesome.Glyph.MINUS).size(16);
         
         // Create separate glyphs for menu items with darker color
         Glyph menuFileGlyph = fontAwesome.create(FontAwesome.Glyph.FILE).size(16).color(Color.GRAY);
@@ -72,6 +90,8 @@ public class HelloController {
         btnCut.setGraphic(cutGlyph);
         btnCopy.setGraphic(copyGlyph);
         btnPaste.setGraphic(pasteGlyph);
+        addButton.setGraphic(addGlyph);
+        removeButton.setGraphic(removeGlyph);
         
         // Set menu item icons with light-colored glyphs for better visibility in dark themes
         menuNew.setGraphic(menuFileGlyph);
@@ -90,6 +110,73 @@ public class HelloController {
         btnCut.setTooltip(new Tooltip("Cut (" + ctrlKey + "+X)"));
         btnCopy.setTooltip(new Tooltip("Copy (" + ctrlKey + "+C)"));
         btnPaste.setTooltip(new Tooltip("Paste (" + ctrlKey + "+V)"));
+        addButton.setTooltip(new Tooltip("Add Variable (Ctrl+Shift+A)"));
+        removeButton.setTooltip(new Tooltip("Remove Selected Variable(s) (Delete)"));
+        
+        // Initialize variable list
+        variableList.setItems(variables);
+        variableList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        variableList.setCellFactory(lv -> new ListCell<Variable>() {
+            @Override
+            protected void updateItem(Variable item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setText(item.toString());
+                    // Add a custom pseudo-class for styling multi-selection
+                    pseudoClassStateChanged(javafx.css.PseudoClass.getPseudoClass("multi-selected"), 
+                        lv.getSelectionModel().getSelectedItems().size() > 1 && 
+                        lv.getSelectionModel().getSelectedItems().contains(item));
+                }
+            }
+        });
+        
+        // Add keyboard shortcuts for adding and removing variables
+        variableList.setOnKeyPressed(event -> {
+            if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Variables")) {
+                if (event.isControlDown()) {
+                    switch (event.getCode()) {
+                        case A:
+                            if (event.isShiftDown()) {
+                                // Ctrl+Shift+A to add a new variable
+                                onAddButtonClick();
+                                event.consume();
+                            }
+                            break;
+                        case DELETE:
+                        case BACK_SPACE:
+                            // Delete or Backspace to remove selected variables
+                            onRemoveButtonClick();
+                            event.consume();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        });
+        
+        // Configure template editor
+        templateEditor.setParagraphGraphicFactory(LineNumberFactory.get(templateEditor));
+        templateEditor.setWrapText(true);
+        
+        // Configure buttons based on selected tab
+        mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != null) {
+                boolean isVariablesTab = "Variables".equals(newTab.getText());
+                addButton.setDisable(!isVariablesTab);
+                removeButton.setDisable(!isVariablesTab);
+                updateEditButtonStates(isVariablesTab);
+            }
+        });
+        
+        // Set initial button states based on default tab
+        boolean isVariablesTab = "Variables".equals(mainTabPane.getSelectionModel().getSelectedItem().getText());
+        addButton.setDisable(!isVariablesTab);
+        removeButton.setDisable(!isVariablesTab);
+        updateEditButtonStates(isVariablesTab);
         
         // Set platform-specific Redo shortcut (no tooltip needed for menu items)
         if (isMac()) {
@@ -109,16 +196,58 @@ public class HelloController {
         statusBar.setManaged(menuShowStatusBar.isSelected());
     }
     
+    private void updateEditButtonStates(boolean isVariablesTab) {
+        boolean hasVariableSelection = !variableList.getSelectionModel().isEmpty();
+        boolean hasTemplateSelection = templateEditor.getSelectedText().length() > 0;
+        
+        if (isVariablesTab) {
+            btnCut.setDisable(!hasVariableSelection);
+            btnCopy.setDisable(!hasVariableSelection);
+            // Paste is always enabled for Variables tab as we can always add new variables
+            btnPaste.setDisable(false);
+        } else {
+            btnCut.setDisable(!hasTemplateSelection);
+            btnCopy.setDisable(!hasTemplateSelection);
+            // Paste is enabled if clipboard has content (simplified here)
+            btnPaste.setDisable(false);
+        }
+    }
+
+    @FXML
+    protected void onAddButtonClick() {
+        Variable newVariable = new Variable("New Variable", "String", "");
+        variables.add(newVariable);
+        variableList.getSelectionModel().select(newVariable);
+        updateEditButtonStates(true);
+    }
+
+    @FXML
+    protected void onRemoveButtonClick() {
+        ObservableList<Variable> selectedItems = variableList.getSelectionModel().getSelectedItems();
+        if (!selectedItems.isEmpty()) {
+            variables.removeAll(selectedItems);
+            updateEditButtonStates(true);
+        }
+    }
+    
     @FXML
     private void handleUndo() {
-        System.out.println("Undo action triggered");
-        // Implement actual undo logic here
+        if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Template")) {
+            templateEditor.undo();
+        } else {
+            System.out.println("Undo action triggered");
+            // Implement actual undo logic for other contexts here
+        }
     }
     
     @FXML
     private void handleRedo() {
-        System.out.println("Redo action triggered");
-        // Implement actual redo logic here
+        if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Template")) {
+            templateEditor.redo();
+        } else {
+            System.out.println("Redo action triggered");
+            // Implement actual redo logic for other contexts here
+        }
     }
     
     @FXML
@@ -157,6 +286,10 @@ public class HelloController {
      * @param templateType The type of template file to use for the project
      */
     private void handleNewProjectInternal(String directory, String projectName, TemplateFileType templateType) {
+        // Clear existing variables and template content
+        variables.clear();
+        templateEditor.clear();
+        
         // Create the ProjectFile with template type
         projectFile = createProjectFile(projectName, directory, templateType);
 
@@ -271,6 +404,22 @@ public class HelloController {
         // Enable/disable project-specific actions based on whether a project is loaded
         btnSave.setDisable(!hasProject);
         menuSave.setDisable(!hasProject);
+        
+        // Handle tab-specific components
+        if (!hasProject) {
+            variables.clear();
+            templateEditor.clear();
+        }
+        
+        // Update tab button states
+        boolean isVariablesTab = mainTabPane != null && 
+            mainTabPane.getSelectionModel().getSelectedItem() != null && 
+            "Variables".equals(mainTabPane.getSelectionModel().getSelectedItem().getText());
+        
+        if (addButton != null && removeButton != null) {
+            addButton.setDisable(!hasProject || !isVariablesTab);
+            removeButton.setDisable(!hasProject || !isVariablesTab || variableList.getSelectionModel().isEmpty());
+        }
         
         // Update window title to reflect current project
         if (hasProject && btnSave.getScene() != null && btnSave.getScene().getWindow() != null) {

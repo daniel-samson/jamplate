@@ -1,0 +1,81 @@
+/* Multi-selection ListView styling */
+.multi-select-list {
+    -fx-background-color: #f8f8f8;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+}
+
+.multi-select-list .list-cell:selected {
+    -fx-background-color: #add8e6;
+    -fx-text-fill: black;
+}
+
+.multi-select-list .list-cell:selected:focused {
+    -fx-background-color: #78c0e0;
+    -fx-text-fill: black;
+}
+
+.multi-select-list .list-cell:hover {
+    -fx-background-color: #e0e0e0;
+}
+
+/* When multiple items are selected, show a distinct background */
+.multi-select-list .list-cell:selected .multi-select-marker {
+    -fx-background-color: #007bff;
+}
+
+/* CodeArea styling for Template tab */
+.code-area {
+    -fx-background-color: #fafafa;
+    -fx-font-family: "Consolas", "Monaco", "DejaVu Sans Mono", monospace;
+    -fx-font-size: 14px;
+    -fx-padding: 5px;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-highlight-fill: #add8e6;
+    -fx-highlight-text-fill: black;
+}
+
+/* Line numbers styling */
+.lineno {
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: #606060;
+    -fx-font-size: 12px;
+    -fx-padding: 0 5px 0 5px;
+    -fx-border-color: #dddddd;
+    -fx-border-width: 0 1px 0 0;
+}
+
+/* Basic syntax highlighting preparations */
+.keyword {
+    -fx-fill: #0000ff;
+    -fx-font-weight: bold;
+}
+
+.string {
+    -fx-fill: #008000;
+}
+
+.comment {
+    -fx-fill: #808080;
+    -fx-font-style: italic;
+}
+
+.number {
+    -fx-fill: #0000ff;
+}
+
+.bracket {
+    -fx-fill: #000000;
+    -fx-font-weight: bold;
+}
+
+.operator {
+    -fx-fill: #000000;
+    -fx-font-weight: bold;
+}
+
+.paragraph-box:has-caret {
+    -fx-background-color: #f2f9fc;
+}
+

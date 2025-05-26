@@ -99,8 +99,11 @@ public class ProjectFileTest {
         String expectedPath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, "project.xml").toString();
         assertEquals(expectedPath, projectFile.getProjectFilePath(), "Project file path should be derived correctly");
         
-        // Verify other fields are empty
-        assertEquals("", projectFile.getTemplateFilePath(), "Template file path should be empty");
+        // Verify template path is derived correctly based on template type
+        String expectedTemplatePath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, "template.html").toString();
+        assertEquals(expectedTemplatePath, projectFile.getTemplateFilePath(), "Template file path should match expected path");
+        
+        // Sample data path should still be empty
         assertEquals("", projectFile.getSampleDataPath(), "Sample data path should be empty");
     }
     
@@ -280,11 +283,9 @@ public class ProjectFileTest {
     @Test
     @DisplayName("open() loads XML file correctly")
     void testOpenXmlFile(@TempDir Path tempDir) throws Exception {
-        // Create a test project file
-        ProjectFile originalProject = new ProjectFile("OpenTest", tempDir.toString());
-        originalProject.setTemplateFilePath("/test/template.tpl");
+        // Create a test project file with HTML template type
+        ProjectFile originalProject = new ProjectFile("OpenTest", tempDir.toString(), TEST_TEMPLATE_TYPE);
         originalProject.setSampleDataPath("/test/data.json");
-        originalProject.setTemplateFileType(TEST_TEMPLATE_TYPE);
         
         // Save the project to create the XML file
         assertTrue(originalProject.save(), "Project should save successfully");
@@ -300,7 +301,10 @@ public class ProjectFileTest {
         assertNotNull(loadedProject, "Loaded project should not be null");
         assertEquals("OpenTest", loadedProject.getProjectName(), "Project name should match");
         assertEquals(tempDir.toString(), loadedProject.getProjectLocation(), "Project location should match");
-        assertEquals("/test/template.tpl", loadedProject.getTemplateFilePath(), "Template path should match");
+        
+        // Verify template path matches the actual generated path
+        String expectedTemplatePath = tempDir.resolve("OpenTest").resolve("template.html").toString();
+        assertEquals(expectedTemplatePath, loadedProject.getTemplateFilePath(), "Template path should match");
         assertEquals("/test/data.json", loadedProject.getSampleDataPath(), "Sample data path should match");
         assertEquals(TEST_TEMPLATE_TYPE, loadedProject.getTemplateFileType(), "Template file type should match");
     }
@@ -308,9 +312,8 @@ public class ProjectFileTest {
     @Test
     @DisplayName("open() handles .jpt extension correctly")
     void testOpenJptFile(@TempDir Path tempDir) throws Exception {
-        // Create a test project file
+        // Create a test project file with PHP template type
         ProjectFile originalProject = new ProjectFile("JptTest", tempDir.toString(), TemplateFileType.PHP_FILE);
-        originalProject.setTemplateFilePath("/jpt/template.tpl");
         
         // Save the project to create the XML file
         assertTrue(originalProject.save(), "Project should save successfully");
@@ -328,7 +331,10 @@ public class ProjectFileTest {
         // Verify the file was loaded correctly
         assertNotNull(loadedProject, "Loaded project should not be null");
         assertEquals("JptTest", loadedProject.getProjectName(), "Project name should match");
-        assertEquals("/jpt/template.tpl", loadedProject.getTemplateFilePath(), "Template path should match");
+        
+        // Verify template path matches the actual generated path
+        String expectedTemplatePath = tempDir.resolve("JptTest").resolve("template.php").toString();
+        assertEquals(expectedTemplatePath, loadedProject.getTemplateFilePath(), "Template path should match");
         assertEquals(TemplateFileType.PHP_FILE, loadedProject.getTemplateFileType(), "Template file type should match");
     }
     

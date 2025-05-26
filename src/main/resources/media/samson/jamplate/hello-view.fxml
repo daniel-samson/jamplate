@@ -2,8 +2,9 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.fxmisc.richtext.CodeArea?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="media.samson.jamplate.HelloController" prefWidth="600" prefHeight="400">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="media.samson.jamplate.HelloController" prefWidth="600" prefHeight="400" stylesheets="@styles.css">
 
   <top>
     <VBox>
@@ -30,6 +31,7 @@
           </Menu>
 
           <Menu text="_View">
+            <SeparatorMenuItem />
             <items>
               <CheckMenuItem fx:id="menuShowToolbar" text="Show _Toolbar" selected="true" onAction="#handleToggleToolbar"/>
               <CheckMenuItem fx:id="menuShowStatusBar" text="Show _Status Bar" selected="true" onAction="#handleToggleStatusBar"/>
@@ -46,19 +48,43 @@
       </MenuBar>
 
       <ToolBar fx:id="toolbar">
-        <Button fx:id="btnNew" onAction="#handleNew" />
-        <Button fx:id="btnOpen" />
-        <Button fx:id="btnSave" />
-        <Separator />
-        <Button fx:id="btnCut" />
-        <Button fx:id="btnCopy" />
-        <Button fx:id="btnPaste" />
+        <items>
+          <Button fx:id="btnNew" text="New" onAction="#handleNew" />
+          <Button fx:id="btnOpen" text="Open" />
+          <Button fx:id="btnSave" text="Save" />
+          <Separator />
+          <Button fx:id="btnCut" text="Cut" />
+          <Button fx:id="btnCopy" text="Copy" />
+          <Button fx:id="btnPaste" text="Paste" />
+          <Separator />
+          <Button fx:id="addButton" text="Add variable" onAction="#onAddButtonClick"/>
+          <Button fx:id="removeButton" text="Remove Variable" onAction="#onRemoveButtonClick"/>
+        </items>
       </ToolBar>
     </VBox>
   </top>
 
   <center>
-    <Label text="Welcome to the Application!" />
+    <VBox VBox.vgrow="ALWAYS">
+      <TabPane fx:id="mainTabPane" VBox.vgrow="ALWAYS">
+        <tabs>
+          <Tab text="Variables" closable="false">
+            <content>
+              <VBox VBox.vgrow="ALWAYS">
+                <ListView fx:id="variableList" VBox.vgrow="ALWAYS" styleClass="multi-select-list"/>
+              </VBox>
+            </content>
+          </Tab>
+          <Tab text="Template" closable="false">
+            <content>
+              <VBox VBox.vgrow="ALWAYS">
+                <CodeArea fx:id="templateEditor" VBox.vgrow="ALWAYS"/>
+              </VBox>
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
+    </VBox>
   </center>
 
   <bottom>

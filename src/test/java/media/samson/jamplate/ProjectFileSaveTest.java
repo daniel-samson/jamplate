@@ -407,5 +407,32 @@ public class ProjectFileSaveTest {
         assertEquals(txtTemplatePath.toString(), txtProject.getTemplateFilePath(), 
                 "Template file path should be updated to reflect created file");
     }
+    
+    /**
+     * Tests that variables.xml file is created when saving a project.
+     */
+    @Test
+    @DisplayName("Test variables file creation")
+    public void testVariablesFileCreation() {
+        // Create a project with any template type
+        ProjectFile project = new ProjectFile("VariablesProject", tempDir.toString(), TemplateFileType.HTML_FILE);
+        
+        // Save the project
+        assertTrue(project.save(), "Project should save successfully");
+        
+        // Verify variables.xml was created
+        Path variablesPath = tempDir.resolve("VariablesProject").resolve("variables.xml");
+        assertTrue(Files.exists(variablesPath), "Variables file should be created");
+        assertEquals(variablesPath.toString(), project.getVariablesFilePath(),
+                "Variables file path should be updated to reflect created file");
+        
+        // Verify content was copied from template
+        try {
+            String content = Files.readString(variablesPath);
+            assertTrue(content.contains("<variable"), "Variables file should contain variable definitions");
+        } catch (IOException e) {
+            fail("Failed to read variables.xml: " + e.getMessage());
+        }
+    }
 }
 
