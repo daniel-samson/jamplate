@@ -53,6 +53,11 @@ public class HelloController {
      * The current project file being worked on.
      */
     private ProjectFile projectFile;
+    
+    /**
+     * Syntax highlighter for the template editor.
+     */
+    private TemplateEditorSyntaxHighlighter syntaxHighlighter;
     @FXML private Button btnNew;
     @FXML private Button btnOpen;
     @FXML private Button btnSave;
@@ -196,6 +201,11 @@ public class HelloController {
         // Configure template editor
         templateEditor.setParagraphGraphicFactory(LineNumberFactory.get(templateEditor));
         templateEditor.setWrapText(true);
+        
+        // Initialize syntax highlighting
+        // Default to HTML, this will be updated when a project is loaded
+        syntaxHighlighter = new TemplateEditorSyntaxHighlighter(templateEditor, TemplateFileType.HTML_FILE);
+        syntaxHighlighter.initialize();
         
         // Initialize autocomplete menu
         autocompleteMenu = new ContextMenu();
@@ -868,6 +878,12 @@ public class HelloController {
                 if (templatePath != null && !templatePath.isEmpty()) {
                     String content = Files.readString(Paths.get(templatePath));
                     templateEditor.replaceText(content);
+                    
+                    // Update syntax highlighting based on template file type
+                    if (syntaxHighlighter != null) {
+                        TemplateFileType fileType = projectFile.getTemplateFileType();
+                        syntaxHighlighter.setTemplateType(fileType);
+                    }
                 }
             } catch (IOException e) {
                 System.err.println("Error loading template content: " + e.getMessage());

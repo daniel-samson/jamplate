@@ -282,6 +282,15 @@ public class ProjectFile {
     }
     
     /**
+     * Gets the template file type (alias for getTemplateFileType).
+     * 
+     * @return The template file type
+     */
+    public TemplateFileType getTemplateType() {
+        return getTemplateFileType();
+    }
+    
+    /**
      * Gets the full path to the project directory.
      * 
      * @return The absolute path to the project directory

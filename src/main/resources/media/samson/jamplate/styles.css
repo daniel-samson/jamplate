@@ -75,6 +75,20 @@
     -fx-font-weight: bold;
 }
 
+/* HTML and PHP specific styles */
+.attribute {
+    -fx-fill: #7D7D7D;
+}
+
+.variable {
+    -fx-fill: #008080;
+}
+
+.template-variable {
+    -fx-fill: #C71585;
+    -fx-font-weight: bold;
+}
+
 .paragraph-box:has-caret {
     -fx-background-color: #f2f9fc;
 }
