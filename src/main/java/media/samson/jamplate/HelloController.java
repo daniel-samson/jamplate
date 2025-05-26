@@ -139,15 +139,26 @@ public class HelloController {
             System.out.println("Location: " + directory);
             System.out.println("Project Name: " + projectName);
             
-            // Create a new ProjectFile instance
-            ProjectFile newProject = new ProjectFile(projectName, directory);
+            // First create a temporary ProjectFile instance to handle initial file creation
+            // This step is necessary to generate the file that open() will load
+            ProjectFile tempProject = new ProjectFile(projectName, directory);
+            boolean saveResult = tempProject.save();
             
-            // Save the project file
-            boolean saveResult = newProject.save();
             if (saveResult) {
-                // Set as current project
-                setProjectFile(newProject);
-                System.out.println("Project file created successfully at: " + newProject.getProjectFilePath());
+                // Get the file path for the created project
+                String projectFilePath = tempProject.getProjectFilePath();
+                
+                // Use open() to load the project (this method will be enhanced later)
+                ProjectFile newProject = ProjectFile.open(projectFilePath);
+                
+                if (newProject != null) {
+                    // Set as current project
+                    setProjectFile(newProject);
+                    System.out.println("Project file created successfully at: " + projectFilePath);
+                } else {
+                    // TODO: Show error dialog
+                    System.err.println("Failed to open project file after creation.");
+                }
             } else {
                 // TODO: Show error dialog
                 System.err.println("Failed to create project file.");
