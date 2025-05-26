@@ -28,6 +28,7 @@ public class HelloController {
     @FXML private MenuItem menuPaste;
     @FXML private MenuItem menuUndo;
     @FXML private MenuItem menuRedo;
+    @FXML private MenuItem menuAbout;
 
     @FXML
     public void initialize() {
@@ -95,6 +96,12 @@ public class HelloController {
     private void handleRedo() {
         System.out.println("Redo action triggered");
         // Implement actual redo logic here
+    }
+    
+    @FXML
+    private void handleAbout() {
+        AboutDialog aboutDialog = new AboutDialog(menuAbout.getParentPopup().getOwnerWindow());
+        aboutDialog.showAndWait();
     }
     
     /**

@@ -39,7 +39,7 @@
           <Menu text="_Help">
             <items>
               <MenuItem text="_View Help" accelerator="F1" />
-              <MenuItem text="_About" />
+              <MenuItem fx:id="menuAbout" text="_About" onAction="#handleAbout" />
             </items>
           </Menu>
         </menus>
