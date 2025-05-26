@@ -32,7 +32,7 @@
           <Menu text="_View">
             <items>
               <CheckMenuItem fx:id="menuShowToolbar" text="Show _Toolbar" selected="true" onAction="#handleToggleToolbar"/>
-              <CheckMenuItem text="Show _Status Bar" selected="true"/>
+              <CheckMenuItem fx:id="menuShowStatusBar" text="Show _Status Bar" selected="true" onAction="#handleToggleStatusBar"/>
             </items>
           </Menu>
 
@@ -62,7 +62,7 @@
   </center>
 
   <bottom>
-    <HBox spacing="10" style="-fx-padding: 5; -fx-background-color: #e0e0e0;">
+    <HBox fx:id="statusBar" spacing="10" style="-fx-padding: 5; -fx-background-color: #e0e0e0;">
       <Label text="Status: Ready" />
     </HBox>
   </bottom>

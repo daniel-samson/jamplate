@@ -6,6 +6,7 @@ import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.application.Platform;
 import org.controlsfx.control.action.Action;
@@ -32,7 +33,9 @@ public class HelloController {
     @FXML private MenuItem menuRedo;
     @FXML private MenuItem menuAbout;
     @FXML private CheckMenuItem menuShowToolbar;
+    @FXML private CheckMenuItem menuShowStatusBar;
     @FXML private ToolBar toolbar;
+    @FXML private HBox statusBar;
 
     @FXML
     public void initialize() {
@@ -92,6 +95,10 @@ public class HelloController {
         // Ensure initial toolbar visibility matches the menuShowToolbar state
         toolbar.setVisible(menuShowToolbar.isSelected());
         toolbar.setManaged(menuShowToolbar.isSelected());
+        
+        // Ensure initial status bar visibility matches the menuShowStatusBar state
+        statusBar.setVisible(menuShowStatusBar.isSelected());
+        statusBar.setManaged(menuShowStatusBar.isSelected());
     }
     
     @FXML
@@ -117,6 +124,13 @@ public class HelloController {
         // Set toolbar visibility based on the CheckMenuItem's selected state
         toolbar.setVisible(menuShowToolbar.isSelected());
         toolbar.setManaged(menuShowToolbar.isSelected()); // Ensures layout adjusts when toolbar is hidden
+    }
+    
+    @FXML
+    private void handleToggleStatusBar() {
+        // Set status bar visibility based on the CheckMenuItem's selected state
+        statusBar.setVisible(menuShowStatusBar.isSelected());
+        statusBar.setManaged(menuShowStatusBar.isSelected()); // Ensures layout adjusts when status bar is hidden
     }
     
     /**
