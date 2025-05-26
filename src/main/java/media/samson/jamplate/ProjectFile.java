@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a Jamplate project file, containing information about the project
@@ -637,6 +639,84 @@ public class ProjectFile {
         } catch (Exception e) {
             System.err.println("Unexpected error opening project file: " + e.getMessage());
             return null;
+        }
+    }
+    
+    /**
+     * Loads variables from the project's variables.xml file.
+     * 
+     * @return List of Variable objects, or empty list if no variables found or error occurs
+     */
+    public List<Variable> loadVariables() {
+        if (variablesFilePath == null || variablesFilePath.isEmpty()) {
+            System.err.println("Error: Variables file path is not set");
+            return new ArrayList<>();
+        }
+
+        try {
+            Path filePath = Paths.get(variablesFilePath);
+            if (!Files.exists(filePath)) {
+                System.err.println("Error: Variables file not found at: " + filePath);
+                return new ArrayList<>();
+            }
+
+            // Create JAXB context for unmarshalling
+            JAXBContext context = JAXBContext.newInstance(Variables.class);
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            
+            // Unmarshal the XML file
+            Variables variables = (Variables) unmarshaller.unmarshal(filePath.toFile());
+            return variables.getVariables();
+            
+        } catch (JAXBException e) {
+            System.err.println("Error parsing variables XML: " + e.getMessage());
+            return new ArrayList<>();
+        } catch (Exception e) {
+            System.err.println("Unexpected error loading variables: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * JAXB wrapper class for the variables list.
+     */
+    @XmlRootElement(name = "jamplate")
+    public static class Variables {
+        private VariableList variableList = new VariableList();
+        
+        @XmlElement(name = "variables")
+        public VariableList getVariableList() {
+            return variableList;
+        }
+        
+        public void setVariableList(VariableList variableList) {
+            this.variableList = variableList;
+        }
+        
+        // Convenience method to get the list directly
+        public List<Variable> getVariables() {
+            return variableList.getVariables();
+        }
+        
+        // Nested class to represent the <variables> element
+        public static class VariableList {
+            private List<Variable> variables = new ArrayList<>();
+            
+            public VariableList() {
+            }
+            
+            public VariableList(List<Variable> variables) {
+                this.variables = variables;
+            }
+            
+            @XmlElement(name = "variable")
+            public List<Variable> getVariables() {
+                return variables;
+            }
+            
+            public void setVariables(List<Variable> variables) {
+                this.variables = variables;
+            }
         }
     }
 }

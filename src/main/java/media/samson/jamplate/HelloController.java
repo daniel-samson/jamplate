@@ -1,8 +1,10 @@
 package media.samson.jamplate;
 
+import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
+import javafx.scene.input.KeyCode;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
@@ -19,6 +21,7 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
@@ -116,6 +119,13 @@ public class HelloController {
         // Initialize variable list
         variableList.setItems(variables);
         variableList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        
+        // Add double-click handler for editing
+        variableList.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                editSelectedVariable();
+            }
+        });
         variableList.setCellFactory(lv -> new ListCell<Variable>() {
             @Override
             protected void updateItem(Variable item, boolean empty) {
@@ -136,7 +146,10 @@ public class HelloController {
         // Add keyboard shortcuts for adding and removing variables
         variableList.setOnKeyPressed(event -> {
             if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Variables")) {
-                if (event.isControlDown()) {
+                if (event.getCode() == KeyCode.ENTER) {
+                    editSelectedVariable();
+                    event.consume();
+                } else if (event.isControlDown()) {
                     switch (event.getCode()) {
                         case A:
                             if (event.isShiftDown()) {
@@ -215,18 +228,74 @@ public class HelloController {
 
     @FXML
     protected void onAddButtonClick() {
-        Variable newVariable = new Variable("New Variable", "String", "");
-        variables.add(newVariable);
-        variableList.getSelectionModel().select(newVariable);
-        updateEditButtonStates(true);
+        // Get the owner window
+        Window owner = addButton.getScene().getWindow();
+        
+        // Create and show the variables dialog
+        VariablesDialog dialog = new VariablesDialog(owner);
+        dialog.showAndWait().ifPresent(variable -> {
+            // Add the new variable to the list
+            variables.add(variable);
+            variableList.getSelectionModel().select(variable);
+            updateEditButtonStates(true);
+        });
     }
 
     @FXML
     protected void onRemoveButtonClick() {
         ObservableList<Variable> selectedItems = variableList.getSelectionModel().getSelectedItems();
         if (!selectedItems.isEmpty()) {
-            variables.removeAll(selectedItems);
-            updateEditButtonStates(true);
+            // Create confirmation dialog with message based on selection count
+            Alert alert = new Alert(
+                AlertType.CONFIRMATION,
+                null, // content text will be set later
+                ButtonType.YES,
+                ButtonType.NO
+            );
+            alert.setTitle("Confirm Remove");
+            
+            if (selectedItems.size() == 1) {
+                Variable variable = selectedItems.get(0);
+                alert.setHeaderText("Remove Variable");
+                alert.setContentText("Are you sure you want to remove the variable '" + variable.getName() + "'?");
+            } else {
+                alert.setHeaderText("Remove Multiple Variables");
+                alert.setContentText("Are you sure you want to remove these " + selectedItems.size() + " variables?");
+            }
+            
+            // Set the owner window for proper dialog positioning
+            alert.initOwner(removeButton.getScene().getWindow());
+            
+            // Show dialog and handle response
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.YES) {
+                    variables.removeAll(selectedItems);
+                    updateEditButtonStates(true);
+                }
+            });
+        }
+    }
+    
+    /**
+     * Opens the variable dialog to edit the currently selected variable.
+     */
+    private void editSelectedVariable() {
+        Variable selected = variableList.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            // Get the owner window
+            Window owner = addButton.getScene().getWindow();
+            
+            // Create and show the variables dialog in edit mode
+            VariablesDialog dialog = new VariablesDialog(owner, selected);
+            dialog.showAndWait().ifPresent(updatedVariable -> {
+                // Get the index of the selected item
+                int index = variables.indexOf(selected);
+                // Replace the old variable with the updated one
+                variables.set(index, updatedVariable);
+                // Maintain selection
+                variableList.getSelectionModel().select(index);
+                updateEditButtonStates(true);
+            });
         }
     }
     
@@ -406,7 +475,13 @@ public class HelloController {
         menuSave.setDisable(!hasProject);
         
         // Handle tab-specific components
-        if (!hasProject) {
+        if (hasProject) {
+            // Load variables from file
+            List<Variable> loadedVariables = projectFile.loadVariables();
+            variables.setAll(loadedVariables);
+            
+            // Here you could also load template content if needed
+        } else {
             variables.clear();
             templateEditor.clear();
         }

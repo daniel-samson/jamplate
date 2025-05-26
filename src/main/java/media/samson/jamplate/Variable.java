@@ -1,9 +1,13 @@
 package media.samson.jamplate;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlRootElement;
+
 /**
  * Represents a variable in the template system.
  * A variable has a name, type, and value.
  */
+@XmlRootElement(name = "variable")
 public class Variable {
     private String name;
     private String type;
@@ -36,6 +40,7 @@ public class Variable {
      *
      * @return The variable name
      */
+    @XmlAttribute(name = "name")
     public String getName() {
         return name;
     }
@@ -54,6 +59,7 @@ public class Variable {
      *
      * @return The variable type
      */
+    @XmlAttribute(name = "type")
     public String getType() {
         return type;
     }
@@ -72,6 +78,7 @@ public class Variable {
      *
      * @return The variable value
      */
+    @XmlAttribute(name = "value")
     public String getValue() {
         return value;
     }
