@@ -43,7 +43,7 @@
 
           <Menu text="_Help">
             <items>
-              <MenuItem text="_View Help" accelerator="F1" />
+              <MenuItem fx:id="menuHelp" text="_View Help" accelerator="F1" onAction="#handleHelp" />
               <MenuItem fx:id="menuAbout" text="_About" onAction="#handleAbout" />
             </items>
           </Menu>

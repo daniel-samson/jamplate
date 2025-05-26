@@ -856,6 +856,20 @@ public class HelloController {
         aboutDialog.showAndWait();
     }
     
+    @FXML
+    private void handleHelp() {
+        String url = "https://jamplates.samson.media";
+        try {
+            java.awt.Desktop.getDesktop().browse(java.net.URI.create(url));
+        } catch (Exception e) {
+            showErrorDialog(
+                "Help Error",
+                "Could Not Open Help",
+                "Unable to open the help URL in your browser. Please visit " + url + " manually."
+            );
+        }
+    }
+    
     /**
      * Handles the "Save Project" action from menu or toolbar.
      * Saves the current project state including variables and template content.
