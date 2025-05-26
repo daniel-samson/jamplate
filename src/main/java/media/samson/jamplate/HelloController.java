@@ -2,7 +2,9 @@ package media.samson.jamplate;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
 import javafx.application.Platform;
@@ -29,6 +31,8 @@ public class HelloController {
     @FXML private MenuItem menuUndo;
     @FXML private MenuItem menuRedo;
     @FXML private MenuItem menuAbout;
+    @FXML private CheckMenuItem menuShowToolbar;
+    @FXML private ToolBar toolbar;
 
     @FXML
     public void initialize() {
@@ -84,6 +88,10 @@ public class HelloController {
             // On Windows/Linux, Redo is typically Ctrl+Y
             menuRedo.setAccelerator(javafx.scene.input.KeyCombination.valueOf("shortcut+Y"));
         }
+        
+        // Ensure initial toolbar visibility matches the menuShowToolbar state
+        toolbar.setVisible(menuShowToolbar.isSelected());
+        toolbar.setManaged(menuShowToolbar.isSelected());
     }
     
     @FXML
@@ -102,6 +110,13 @@ public class HelloController {
     private void handleAbout() {
         AboutDialog aboutDialog = new AboutDialog(menuAbout.getParentPopup().getOwnerWindow());
         aboutDialog.showAndWait();
+    }
+
+    @FXML
+    private void handleToggleToolbar() {
+        // Set toolbar visibility based on the CheckMenuItem's selected state
+        toolbar.setVisible(menuShowToolbar.isSelected());
+        toolbar.setManaged(menuShowToolbar.isSelected()); // Ensures layout adjusts when toolbar is hidden
     }
     
     /**

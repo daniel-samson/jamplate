@@ -31,7 +31,7 @@
 
           <Menu text="_View">
             <items>
-              <CheckMenuItem text="Show _Toolbar" selected="true"/>
+              <CheckMenuItem fx:id="menuShowToolbar" text="Show _Toolbar" selected="true" onAction="#handleToggleToolbar"/>
               <CheckMenuItem text="Show _Status Bar" selected="true"/>
             </items>
           </Menu>
@@ -45,7 +45,7 @@
         </menus>
       </MenuBar>
 
-      <ToolBar>
+      <ToolBar fx:id="toolbar">
         <Button fx:id="btnNew" />
         <Button fx:id="btnOpen" />
         <Button fx:id="btnSave" />
