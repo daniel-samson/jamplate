@@ -44,9 +44,14 @@ public class ProjectFileSaveTest {
         // Verify save succeeded
         assertTrue(saveResult, "Save operation should succeed");
         
-        // Verify file exists
-        Path expectedFilePath = tempDir.resolve("TestProject").resolve("TestProject.xml");
-        assertTrue(Files.exists(expectedFilePath), "XML file should be created");
+        // Verify project directory exists
+        Path expectedProjectDir = tempDir.resolve("TestProject");
+        assertTrue(Files.exists(expectedProjectDir), "Project directory should be created");
+        assertTrue(Files.isDirectory(expectedProjectDir), "Project path should be a directory");
+        
+        // Verify file exists with new naming convention
+        Path expectedFilePath = expectedProjectDir.resolve("project.xml");
+        assertTrue(Files.exists(expectedFilePath), "project.xml file should be created");
         
         // Verify file content
         String content = Files.readString(expectedFilePath);
@@ -72,8 +77,8 @@ public class ProjectFileSaveTest {
         // Save the project
         assertTrue(originalProject.save(), "Project should save successfully");
         
-        // Get the saved file path
-        Path xmlPath = tempDir.resolve("UnmarshalTest").resolve("UnmarshalTest.xml");
+        // Get the saved file path with new naming convention
+        Path xmlPath = tempDir.resolve("UnmarshalTest").resolve("project.xml");
         
         // Create JAXB context for unmarshalling
         JAXBContext context = JAXBContext.newInstance(ProjectFile.class);
@@ -188,9 +193,9 @@ public class ProjectFileSaveTest {
         Path projectDir = nestedPath.resolve("NestedTest");
         assertTrue(Files.exists(projectDir), "Project directory should be created");
         
-        // Verify file exists
-        Path xmlPath = projectDir.resolve("NestedTest.xml");
-        assertTrue(Files.exists(xmlPath), "XML file should exist in nested directory");
+        // Verify file exists with new naming convention
+        Path xmlPath = projectDir.resolve("project.xml");
+        assertTrue(Files.exists(xmlPath), "project.xml file should exist in nested directory");
     }
     
     /**
@@ -209,10 +214,10 @@ public class ProjectFileSaveTest {
         // Save the project
         assertTrue(specialCharsProject.save(), "Project with special characters should save successfully");
         
-        // Verify file exists
-        Path xmlPath = tempDir.resolve("Test & Special < Characters > Project")
-                             .resolve("Test & Special < Characters > Project.xml");
-        assertTrue(Files.exists(xmlPath), "XML file with special characters should exist");
+        // Verify file exists with new naming convention
+        Path projectDir = tempDir.resolve("Test & Special < Characters > Project");
+        Path xmlPath = projectDir.resolve("project.xml");
+        assertTrue(Files.exists(xmlPath), "project.xml file with special characters should exist");
         
         // Read the file content
         String content = Files.readString(xmlPath);
@@ -243,9 +248,9 @@ public class ProjectFileSaveTest {
         // Save again (should overwrite)
         assertTrue(projectFile.save(), "Second save should succeed and overwrite");
         
-        // Verify file exists
-        Path xmlPath = tempDir.resolve("OverwriteTest").resolve("OverwriteTest.xml");
-        assertTrue(Files.exists(xmlPath), "XML file should exist");
+        // Verify file exists with new naming convention
+        Path xmlPath = tempDir.resolve("OverwriteTest").resolve("project.xml");
+        assertTrue(Files.exists(xmlPath), "project.xml file should exist");
         
         // Verify updated content
         String content = Files.readString(xmlPath);
@@ -290,6 +295,85 @@ public class ProjectFileSaveTest {
             // This is expected in some cases
             System.out.println("Exception during read-only test: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Tests that the correct directory structure is created when saving a project file.
+     * Verifies:
+     * 1. A project directory is created with the project name inside the specified location
+     * 2. The project.xml file is created inside that directory
+     * 3. The path structure is correct and matches the expected format
+     */
+    @Test
+    @DisplayName("Test project directory structure")
+    public void testProjectDirectoryStructure() {
+        // Create a unique project name for this test
+        String projectName = "TestProjectStructure";
+        String projectLocation = tempDir.toString();
+        
+        // Create the project file
+        ProjectFile projectFile = new ProjectFile(projectName, projectLocation, TemplateFileType.TXT_FILE);
+        
+        // Save the project file
+        boolean saved = projectFile.save();
+        assertTrue(saved, "Project file should save successfully");
+        
+        // Expected paths
+        Path expectedProjectDir = tempDir.resolve(projectName);
+        Path expectedXmlFile = expectedProjectDir.resolve("project.xml");
+        
+        // Verify the project directory was created
+        assertTrue(Files.exists(expectedProjectDir), 
+                "Project directory should be created at: " + expectedProjectDir);
+        assertTrue(Files.isDirectory(expectedProjectDir), 
+                "Created path should be a directory: " + expectedProjectDir);
+        
+        // Verify the project.xml file was created inside the project directory
+        assertTrue(Files.exists(expectedXmlFile), 
+                "project.xml file should be created at: " + expectedXmlFile);
+        
+        try {
+            // Verify file has content
+            long fileSize = Files.size(expectedXmlFile);
+            assertTrue(fileSize > 0, "Project file should have content");
+            
+            // Verify the file contains the expected project name
+            String content = Files.readString(expectedXmlFile);
+            assertTrue(content.contains("<name>" + projectName + "</name>"), 
+                    "XML file should contain the project name");
+            
+            // Verify the projectFilePath in the project file object was updated correctly
+            assertEquals(expectedXmlFile.toString(), projectFile.getProjectFilePath(),
+                    "ProjectFile.projectFilePath should be set to the XML file path");
+            
+        } catch (IOException e) {
+            fail("Failed to read project file: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Tests that opening a project from a directory path works correctly when 
+     * using the new directory structure.
+     */
+    @Test
+    @DisplayName("Test open project from directory path")
+    public void testOpenProjectFromDirectory() {
+        // Create and save a project first
+        String projectName = "TestOpenFromDir";
+        String projectLocation = tempDir.toString();
+        
+        ProjectFile originalProject = new ProjectFile(projectName, projectLocation, TemplateFileType.HTML_FILE);
+        boolean saved = originalProject.save();
+        assertTrue(saved, "Project should save successfully");
+        
+        // Try to open the project by providing just the project directory path
+        Path projectDirPath = tempDir.resolve(projectName);
+        ProjectFile loadedProject = ProjectFile.open(projectDirPath.toString());
+        
+        // Verify the project was loaded correctly
+        assertNotNull(loadedProject, "Project should be loaded from directory path");
+        assertEquals(projectName, loadedProject.getProjectName(), "Project name should match");
+        assertEquals(TemplateFileType.HTML_FILE, loadedProject.getTemplateFileType(), "Template type should match");
     }
 }
 

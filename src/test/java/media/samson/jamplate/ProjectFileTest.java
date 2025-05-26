@@ -25,6 +25,7 @@ public class ProjectFileTest {
     private static final String TEST_PROJECT_LOCATION = "/test/location";
     private static final String TEST_TEMPLATE_PATH = "/test/template.tpl";
     private static final String TEST_SAMPLE_DATA = "/test/data.json";
+    private static final TemplateFileType TEST_TEMPLATE_TYPE = TemplateFileType.HTML_FILE;
     
     private ProjectFile projectFile;
     
@@ -43,6 +44,7 @@ public class ProjectFileTest {
         assertEquals("", projectFile.getProjectFilePath(), "Project file path should be empty");
         assertEquals("", projectFile.getTemplateFilePath(), "Template file path should be empty");
         assertEquals("", projectFile.getSampleDataPath(), "Sample data path should be empty");
+        assertNull(projectFile.getTemplateFileType(), "Template file type should be null");
     }
     
     @Test
@@ -56,19 +58,20 @@ public class ProjectFileTest {
         assertEquals(TEST_PROJECT_LOCATION, projectFile.getProjectLocation(), "Project location should match input");
         
         // Verify derived project file path
-        String expectedPath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, TEST_PROJECT_NAME + ".jpt").toString();
+        String expectedPath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, "project.xml").toString();
         assertEquals(expectedPath, projectFile.getProjectFilePath(), "Project file path should be derived correctly");
         
         // Verify other fields are empty
         assertEquals("", projectFile.getTemplateFilePath(), "Template file path should be empty");
         assertEquals("", projectFile.getSampleDataPath(), "Sample data path should be empty");
+        assertNull(projectFile.getTemplateFileType(), "Template file type should be null");
     }
     
     @Test
     @DisplayName("Full constructor sets all properties")
     void testFullConstructor() {
         // Create project with full constructor
-        String projectFilePath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, "project.jpt").toString();
+        String projectFilePath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, "project.xml").toString();
         projectFile = new ProjectFile(TEST_PROJECT_NAME, TEST_PROJECT_LOCATION, 
                 projectFilePath, TEST_TEMPLATE_PATH, TEST_SAMPLE_DATA);
         
@@ -78,6 +81,56 @@ public class ProjectFileTest {
         assertEquals(projectFilePath, projectFile.getProjectFilePath(), "Project file path should match input");
         assertEquals(TEST_TEMPLATE_PATH, projectFile.getTemplateFilePath(), "Template file path should match input");
         assertEquals(TEST_SAMPLE_DATA, projectFile.getSampleDataPath(), "Sample data path should match input");
+        assertNull(projectFile.getTemplateFileType(), "Template file type should be null for legacy constructor");
+    }
+    
+    @Test
+    @DisplayName("Constructor with template type sets all properties correctly")
+    void testConstructorWithTemplateType() {
+        // Create project with template type constructor
+        projectFile = new ProjectFile(TEST_PROJECT_NAME, TEST_PROJECT_LOCATION, TEST_TEMPLATE_TYPE);
+        
+        // Verify fields are set correctly
+        assertEquals(TEST_PROJECT_NAME, projectFile.getProjectName(), "Project name should match input");
+        assertEquals(TEST_PROJECT_LOCATION, projectFile.getProjectLocation(), "Project location should match input");
+        assertEquals(TEST_TEMPLATE_TYPE, projectFile.getTemplateFileType(), "Template file type should match input");
+        
+        // Verify derived project file path
+        String expectedPath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, "project.xml").toString();
+        assertEquals(expectedPath, projectFile.getProjectFilePath(), "Project file path should be derived correctly");
+        
+        // Verify other fields are empty
+        assertEquals("", projectFile.getTemplateFilePath(), "Template file path should be empty");
+        assertEquals("", projectFile.getSampleDataPath(), "Sample data path should be empty");
+    }
+    
+    @Test
+    @DisplayName("Full constructor with template type sets all properties")
+    void testFullConstructorWithTemplateType() {
+        // Create project with full constructor including template type
+        String projectFilePath = Paths.get(TEST_PROJECT_LOCATION, TEST_PROJECT_NAME, "project.jpt").toString();
+        projectFile = new ProjectFile(TEST_PROJECT_NAME, TEST_PROJECT_LOCATION, 
+                projectFilePath, TEST_TEMPLATE_PATH, TEST_SAMPLE_DATA, TEST_TEMPLATE_TYPE);
+        
+        // Verify all fields are set correctly
+        assertEquals(TEST_PROJECT_NAME, projectFile.getProjectName(), "Project name should match input");
+        assertEquals(TEST_PROJECT_LOCATION, projectFile.getProjectLocation(), "Project location should match input");
+        assertEquals(projectFilePath, projectFile.getProjectFilePath(), "Project file path should match input");
+        assertEquals(TEST_TEMPLATE_PATH, projectFile.getTemplateFilePath(), "Template file path should match input");
+        assertEquals(TEST_SAMPLE_DATA, projectFile.getSampleDataPath(), "Sample data path should match input");
+        assertEquals(TEST_TEMPLATE_TYPE, projectFile.getTemplateFileType(), "Template file type should match input");
+    }
+    
+    @Test
+    @DisplayName("Static create method with template type works correctly")
+    void testCreateWithTemplateType() {
+        // Create project using static factory method
+        projectFile = ProjectFile.create(TEST_PROJECT_NAME, TEST_PROJECT_LOCATION, TEST_TEMPLATE_TYPE);
+        
+        // Verify fields are set correctly
+        assertEquals(TEST_PROJECT_NAME, projectFile.getProjectName(), "Project name should match input");
+        assertEquals(TEST_PROJECT_LOCATION, projectFile.getProjectLocation(), "Project location should match input");
+        assertEquals(TEST_TEMPLATE_TYPE, projectFile.getTemplateFileType(), "Template file type should match input");
     }
     
     @Test
@@ -90,6 +143,7 @@ public class ProjectFileTest {
         projectFile.setProjectFilePath(projectFilePath);
         projectFile.setTemplateFilePath(TEST_TEMPLATE_PATH);
         projectFile.setSampleDataPath(TEST_SAMPLE_DATA);
+        projectFile.setTemplateFileType(TEST_TEMPLATE_TYPE);
         
         // Verify values using getters
         assertEquals(TEST_PROJECT_NAME, projectFile.getProjectName(), "Project name getter should return set value");
@@ -97,6 +151,7 @@ public class ProjectFileTest {
         assertEquals(projectFilePath, projectFile.getProjectFilePath(), "Project file path getter should return set value");
         assertEquals(TEST_TEMPLATE_PATH, projectFile.getTemplateFilePath(), "Template file path getter should return set value");
         assertEquals(TEST_SAMPLE_DATA, projectFile.getSampleDataPath(), "Sample data path getter should return set value");
+        assertEquals(TEST_TEMPLATE_TYPE, projectFile.getTemplateFileType(), "Template file type getter should return set value");
     }
     
     @Test
@@ -152,6 +207,7 @@ public class ProjectFileTest {
         projectFile.setProjectName(TEST_PROJECT_NAME);
         projectFile.setProjectLocation(TEST_PROJECT_LOCATION);
         projectFile.setProjectFilePath("/test/file.jpt");
+        projectFile.setTemplateFileType(TEST_TEMPLATE_TYPE);
         
         String toString = projectFile.toString();
         
@@ -159,6 +215,7 @@ public class ProjectFileTest {
         assertTrue(toString.contains(TEST_PROJECT_NAME), "toString() should contain project name");
         assertTrue(toString.contains(TEST_PROJECT_LOCATION), "toString() should contain project location");
         assertTrue(toString.contains("/test/file.jpt"), "toString() should contain project file path");
+        assertTrue(toString.contains(TEST_TEMPLATE_TYPE.toString()), "toString() should contain template file type");
     }
     
     @ParameterizedTest
@@ -208,6 +265,7 @@ public class ProjectFileTest {
         assertDoesNotThrow(() -> projectFile.setProjectName(null), "Setting null project name should not throw");
         assertDoesNotThrow(() -> projectFile.setProjectLocation(null), "Setting null project location should not throw");
         assertDoesNotThrow(() -> projectFile.setProjectFilePath(null), "Setting null project file path should not throw");
+        assertDoesNotThrow(() -> projectFile.setTemplateFileType(null), "Setting null template file type should not throw");
         
         // getProjectDirectoryPath should handle null values
         projectFile.setProjectName(null);
@@ -226,12 +284,13 @@ public class ProjectFileTest {
         ProjectFile originalProject = new ProjectFile("OpenTest", tempDir.toString());
         originalProject.setTemplateFilePath("/test/template.tpl");
         originalProject.setSampleDataPath("/test/data.json");
+        originalProject.setTemplateFileType(TEST_TEMPLATE_TYPE);
         
         // Save the project to create the XML file
         assertTrue(originalProject.save(), "Project should save successfully");
         
         // Get the saved file path (should be XML)
-        Path xmlPath = tempDir.resolve("OpenTest").resolve("OpenTest.xml");
+        Path xmlPath = tempDir.resolve("OpenTest").resolve("project.xml");
         assertTrue(Files.exists(xmlPath), "XML file should exist before test");
         
         // Test opening the XML file
@@ -243,20 +302,21 @@ public class ProjectFileTest {
         assertEquals(tempDir.toString(), loadedProject.getProjectLocation(), "Project location should match");
         assertEquals("/test/template.tpl", loadedProject.getTemplateFilePath(), "Template path should match");
         assertEquals("/test/data.json", loadedProject.getSampleDataPath(), "Sample data path should match");
+        assertEquals(TEST_TEMPLATE_TYPE, loadedProject.getTemplateFileType(), "Template file type should match");
     }
     
     @Test
     @DisplayName("open() handles .jpt extension correctly")
     void testOpenJptFile(@TempDir Path tempDir) throws Exception {
         // Create a test project file
-        ProjectFile originalProject = new ProjectFile("JptTest", tempDir.toString());
+        ProjectFile originalProject = new ProjectFile("JptTest", tempDir.toString(), TemplateFileType.PHP_FILE);
         originalProject.setTemplateFilePath("/jpt/template.tpl");
         
         // Save the project to create the XML file
         assertTrue(originalProject.save(), "Project should save successfully");
         
         // Get the saved file path
-        Path xmlPath = tempDir.resolve("JptTest").resolve("JptTest.xml");
+        Path xmlPath = tempDir.resolve("JptTest").resolve("project.xml");
         assertTrue(Files.exists(xmlPath), "XML file should exist before test");
         
         // Create a path with .jpt extension
@@ -269,6 +329,7 @@ public class ProjectFileTest {
         assertNotNull(loadedProject, "Loaded project should not be null");
         assertEquals("JptTest", loadedProject.getProjectName(), "Project name should match");
         assertEquals("/jpt/template.tpl", loadedProject.getTemplateFilePath(), "Template path should match");
+        assertEquals(TemplateFileType.PHP_FILE, loadedProject.getTemplateFileType(), "Template file type should match");
     }
     
     @Test
@@ -281,7 +342,7 @@ public class ProjectFileTest {
         assertTrue(originalProject.save(), "Project should save successfully");
         
         // Get the saved file path
-        Path xmlPath = tempDir.resolve("NoExtTest").resolve("NoExtTest.xml");
+        Path xmlPath = tempDir.resolve("NoExtTest").resolve("project.xml");
         assertTrue(Files.exists(xmlPath), "XML file should exist before test");
         
         // Create a path with no extension
@@ -333,5 +394,45 @@ public class ProjectFileTest {
         // Test with whitespace-only path
         ProjectFile whitespaceResult = ProjectFile.open("   ");
         assertNull(whitespaceResult, "Result should be null for whitespace-only path");
+    }
+    
+    @Test
+    @DisplayName("Template file type getter and setter work correctly")
+    void testTemplateFileTypeGetterAndSetter() {
+        // Set and get different template file types
+        projectFile.setTemplateFileType(TemplateFileType.HTML_FILE);
+        assertEquals(TemplateFileType.HTML_FILE, projectFile.getTemplateFileType(), 
+                "Template file type should match HTML_FILE");
+        
+        projectFile.setTemplateFileType(TemplateFileType.PHP_FILE);
+        assertEquals(TemplateFileType.PHP_FILE, projectFile.getTemplateFileType(),
+                "Template file type should match PHP_FILE");
+        
+        projectFile.setTemplateFileType(TemplateFileType.TXT_FILE);
+        assertEquals(TemplateFileType.TXT_FILE, projectFile.getTemplateFileType(),
+                "Template file type should match TXT_FILE");
+        
+        // Set to null
+        projectFile.setTemplateFileType(null);
+        assertNull(projectFile.getTemplateFileType(), "Template file type should be null");
+    }
+    
+    @Test
+    @DisplayName("Save and load with template file type work correctly")
+    void testSaveAndLoadWithTemplateFileType(@TempDir Path tempDir) throws Exception {
+        // Create a project with template file type
+        ProjectFile originalProject = new ProjectFile("TemplateTypeTest", tempDir.toString(), TemplateFileType.TXT_FILE);
+        
+        // Save the project
+        assertTrue(originalProject.save(), "Project should save successfully");
+        
+        // Load the project
+        String projectFilePath = originalProject.getProjectFilePath();
+        ProjectFile loadedProject = ProjectFile.open(projectFilePath);
+        
+        // Verify template file type was preserved
+        assertNotNull(loadedProject, "Loaded project should not be null");
+        assertEquals(TemplateFileType.TXT_FILE, loadedProject.getTemplateFileType(), 
+                "Template file type should be preserved in XML serialization");
     }
 }
