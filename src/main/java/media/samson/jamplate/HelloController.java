@@ -128,20 +128,23 @@ public class HelloController {
     }
     
     @FXML
-        private void handleNew() {
+    private void handleNew() {
         // Get the owner window (could be from toolbar button or menu item)
         Window owner = btnNew.getScene().getWindow();
         
         // Create and show the dialog
         CreateProjectDialog dialog = new CreateProjectDialog(owner);
         dialog.showAndWait().ifPresent(result -> {
-            String directory = result.getKey();
-            String projectName = result.getValue();
+            String directory = result.getDirectory();
+            String projectName = result.getProjectName();
+            TemplateFileType templateType = result.getTemplateFileType();
+            
             System.out.println("Creating new project:");
             System.out.println("Location: " + directory);
             System.out.println("Project Name: " + projectName);
+            System.out.println("Template Type: " + templateType);
             
-            handleNewProjectInternal(directory, projectName);
+            handleNewProjectInternal(directory, projectName, templateType);
         });
     }
     
@@ -151,10 +154,12 @@ public class HelloController {
      * 
      * @param directory The directory where the project will be created
      * @param projectName The name of the project
+     * @param templateType The type of template file to use for the project
      */
-    private void handleNewProjectInternal(String directory, String projectName) {
-        // Create the ProjectFile directly as the class property
-        projectFile = createProjectFile(projectName, directory);
+    private void handleNewProjectInternal(String directory, String projectName, TemplateFileType templateType) {
+        // Create the ProjectFile with template type
+        projectFile = createProjectFile(projectName, directory, templateType);
+
         boolean saveResult = projectFile.save();
         
         if (saveResult) {
@@ -299,13 +304,26 @@ public class HelloController {
     
     /**
      * Creates a new ProjectFile instance.
-     * Extracted for better testability.
      * 
      * @param projectName The name of the project
      * @param directory The directory where the project will be created
      * @return A new ProjectFile instance
+     * @deprecated Use {@link #createProjectFile(String, String, TemplateFileType)} instead
      */
+    @Deprecated
     protected ProjectFile createProjectFile(String projectName, String directory) {
         return new ProjectFile(projectName, directory);
+    }
+    
+    /**
+     * Creates a new ProjectFile instance with template type.
+     * 
+     * @param projectName The name of the project
+     * @param directory The directory where the project will be created
+     * @param templateType The type of template to use for the project
+     * @return A new ProjectFile instance
+     */
+    protected ProjectFile createProjectFile(String projectName, String directory, TemplateFileType templateType) {
+        return new ProjectFile(projectName, directory, templateType);
     }
 }

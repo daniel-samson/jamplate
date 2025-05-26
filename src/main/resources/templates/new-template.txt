@@ -1,0 +1,3 @@
+{{$JamplateProjectName}} {{$JamplateDocumentCreateAt}}
+
+Add your template here

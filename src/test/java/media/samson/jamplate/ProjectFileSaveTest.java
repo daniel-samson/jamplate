@@ -375,5 +375,37 @@ public class ProjectFileSaveTest {
         assertEquals(projectName, loadedProject.getProjectName(), "Project name should match");
         assertEquals(TemplateFileType.HTML_FILE, loadedProject.getTemplateFileType(), "Template type should match");
     }
+    
+    /**
+     * Tests that template files are created with the correct extension based on
+     * the TemplateFileType when saving a project.
+     */
+    @Test
+    @DisplayName("Test template file creation with correct extensions")
+    public void testTemplateFileCreation() {
+        // Test HTML template file creation
+        ProjectFile htmlProject = new ProjectFile("HtmlProject", tempDir.toString(), TemplateFileType.HTML_FILE);
+        assertTrue(htmlProject.save(), "HTML project should save successfully");
+        Path htmlTemplatePath = tempDir.resolve("HtmlProject").resolve("template.html");
+        assertTrue(Files.exists(htmlTemplatePath), "HTML template file should be created");
+        assertEquals(htmlTemplatePath.toString(), htmlProject.getTemplateFilePath(), 
+                "Template file path should be updated to reflect created file");
+        
+        // Test PHP template file creation
+        ProjectFile phpProject = new ProjectFile("PhpProject", tempDir.toString(), TemplateFileType.PHP_FILE);
+        assertTrue(phpProject.save(), "PHP project should save successfully");
+        Path phpTemplatePath = tempDir.resolve("PhpProject").resolve("template.php");
+        assertTrue(Files.exists(phpTemplatePath), "PHP template file should be created");
+        assertEquals(phpTemplatePath.toString(), phpProject.getTemplateFilePath(), 
+                "Template file path should be updated to reflect created file");
+        
+        // Test TXT template file creation
+        ProjectFile txtProject = new ProjectFile("TxtProject", tempDir.toString(), TemplateFileType.TXT_FILE);
+        assertTrue(txtProject.save(), "TXT project should save successfully");
+        Path txtTemplatePath = tempDir.resolve("TxtProject").resolve("template.txt");
+        assertTrue(Files.exists(txtTemplatePath), "TXT template file should be created");
+        assertEquals(txtTemplatePath.toString(), txtProject.getTemplateFilePath(), 
+                "Template file path should be updated to reflect created file");
+    }
 }
 

@@ -156,9 +156,9 @@ public class HelloControllerTest {
             
             // Invoke handleNew processing directly
             Method handleNewProjectInternal = HelloController.class.getDeclaredMethod(
-                "handleNewProjectInternal", String.class, String.class);
+                "handleNewProjectInternal", String.class, String.class, TemplateFileType.class);
             handleNewProjectInternal.setAccessible(true);
-            handleNewProjectInternal.invoke(spyController, tempDir.toString(), projectName);
+            handleNewProjectInternal.invoke(spyController, tempDir.toString(), projectName, TemplateFileType.TXT_FILE);
             
             // Verify that showErrorDialog was called with the expected parameters
             verify(spyController).showErrorDialog(
@@ -186,13 +186,13 @@ public class HelloControllerTest {
         when(mockProject.save()).thenReturn(false);
         
         // Set up the controller to create this mock project
-        doReturn(mockProject).when(spyController).createProjectFile(anyString(), anyString());
+        doReturn(mockProject).when(spyController).createProjectFile(anyString(), anyString(), any(TemplateFileType.class));
         
         // Invoke handleNew processing directly
         Method handleNewProjectInternal = HelloController.class.getDeclaredMethod(
-            "handleNewProjectInternal", String.class, String.class);
+            "handleNewProjectInternal", String.class, String.class, TemplateFileType.class);
         handleNewProjectInternal.setAccessible(true);
-        handleNewProjectInternal.invoke(spyController, "/test/path", "TestProject");
+        handleNewProjectInternal.invoke(spyController, "/test/path", "TestProject", TemplateFileType.TXT_FILE);
         
         // Verify that showErrorDialog was called with the expected parameters
         verify(spyController).showErrorDialog(

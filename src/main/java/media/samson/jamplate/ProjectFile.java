@@ -9,9 +9,13 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Represents a Jamplate project file, containing information about the project
@@ -30,6 +34,7 @@ public class ProjectFile {
     private String projectFilePath;
     private String templateFilePath;
     private String sampleDataPath;
+    private TemplateFileType templateFileType;
     
     /**
      * Default constructor.
@@ -41,6 +46,7 @@ public class ProjectFile {
         this.projectFilePath = "";
         this.templateFilePath = "";
         this.sampleDataPath = "";
+        this.templateFileType = null;
     }
     
     /**
@@ -50,16 +56,37 @@ public class ProjectFile {
      * @param projectLocation The location of the project on the filesystem
      */
     public ProjectFile(String projectName, String projectLocation) {
+        this(projectName, projectLocation, null);
+    }
+    
+    /**
+     * Constructor with essential parameters and template file type.
+     * 
+     * @param projectName The name of the project
+     * @param projectLocation The location of the project on the filesystem
+     * @param templateFileType The type of template file to be used
+     */
+    public ProjectFile(String projectName, String projectLocation, TemplateFileType templateFileType) {
         this.projectName = projectName;
         this.projectLocation = projectLocation;
+        this.templateFileType = templateFileType;
         
-        // Derive default project file path from name and location
+        // Derive paths from name and location
         Path locationPath = Paths.get(projectLocation);
         Path projectPath = locationPath.resolve(projectName);
-        this.projectFilePath = projectPath.resolve(projectName + ".jpt").toString();
         
-        // Initialize other paths with empty values
-        this.templateFilePath = "";
+        // Set project file path
+        this.projectFilePath = projectPath.resolve("project.xml").toString();
+        
+        // Set template file path if template type is specified
+        if (templateFileType != null) {
+            String templateExtension = getTemplateFileExtension();
+            this.templateFilePath = projectPath.resolve("template" + templateExtension).toString();
+        } else {
+            this.templateFilePath = "";
+        }
+        
+        // Initialize sample data path
         this.sampleDataPath = "";
     }
     
@@ -79,6 +106,39 @@ public class ProjectFile {
         this.projectFilePath = projectFilePath;
         this.templateFilePath = templateFilePath;
         this.sampleDataPath = sampleDataPath;
+        this.templateFileType = null;
+    }
+    
+    /**
+     * Full constructor with all parameters including template file type.
+     * 
+     * @param projectName The name of the project
+     * @param projectLocation The location of the project on the filesystem
+     * @param projectFilePath The path to the project file
+     * @param templateFilePath The path to the template file used by the project
+     * @param sampleDataPath The path to sample data used by the project
+     * @param templateFileType The type of template file used by the project
+     */
+    public ProjectFile(String projectName, String projectLocation, String projectFilePath,
+                       String templateFilePath, String sampleDataPath, TemplateFileType templateFileType) {
+        this.projectName = projectName;
+        this.projectLocation = projectLocation;
+        this.projectFilePath = projectFilePath;
+        this.templateFilePath = templateFilePath;
+        this.sampleDataPath = sampleDataPath;
+        this.templateFileType = templateFileType;
+    }
+    
+    /**
+     * Creates a new ProjectFile instance with specified template type.
+     * 
+     * @param projectName The name of the project
+     * @param projectLocation The location of the project
+     * @param templateFileType The type of template file to use
+     * @return A new ProjectFile instance
+     */
+    public static ProjectFile create(String projectName, String projectLocation, TemplateFileType templateFileType) {
+        return new ProjectFile(projectName, projectLocation, templateFileType);
     }
     
     /**
@@ -177,6 +237,25 @@ public class ProjectFile {
     }
     
     /**
+     * Gets the template file type.
+     * 
+     * @return The template file type
+     */
+    @XmlElement(name = "templateFileType")
+    public TemplateFileType getTemplateFileType() {
+        return templateFileType;
+    }
+
+    /**
+     * Sets the template file type.
+     * 
+     * @param templateFileType The template file type to set
+     */
+    public void setTemplateFileType(TemplateFileType templateFileType) {
+        this.templateFileType = templateFileType;
+    }
+    
+    /**
      * Gets the full path to the project directory.
      * 
      * @return The absolute path to the project directory
@@ -200,12 +279,67 @@ public class ProjectFile {
         return new File(projectFilePath).exists();
     }
     
+    /**
+     * Gets the appropriate file extension for the template file based on the template file type.
+     * 
+     * @return The file extension including the dot (e.g., ".html")
+     */
+    private String getTemplateFileExtension() {
+        if (templateFileType == null) {
+            return ".txt"; // Default to txt if not specified
+        }
+        switch (templateFileType) {
+            case HTML_FILE:
+                return ".html";
+            case PHP_FILE:
+                return ".php";
+            case TXT_FILE:
+                return ".txt";
+            default:
+                return ".txt";
+        }
+    }
+    
+    /**
+     * Reads and processes the template content from resources, replacing placeholders with actual values.
+     * 
+     * @return The processed template content with placeholders replaced by actual values
+     */
+    private String getResourceTemplateContent() {
+        String extension = getTemplateFileExtension();
+        String resourcePath = "/templates/new-template" + extension;
+        
+        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+            if (is == null) {
+                System.err.println("Warning: Template resource not found: " + resourcePath);
+                return "";
+            }
+            
+            // Read the template content
+            String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            
+            // Replace placeholders with actual values
+            content = content.replace("{{$JamplateProjectName}}", projectName);
+            
+            // Get current timestamp in a readable format
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            content = content.replace("{{$JamplateDocumentCreateAt}}", timestamp);
+            
+            return content;
+            
+        } catch (IOException e) {
+            System.err.println("Error reading template resource: " + e.getMessage());
+            return "";
+        }
+    }
+    
     @Override
     public String toString() {
         return "ProjectFile{" +
                 "projectName='" + projectName + '\'' +
                 ", projectLocation='" + projectLocation + '\'' +
                 ", projectFilePath='" + projectFilePath + '\'' +
+                ", templateFileType='" + templateFileType + '\'' +
                 '}';
     }
     
@@ -228,49 +362,66 @@ public class ProjectFile {
                 return false;
             }
             
-            // Create the file path if not already set
+            // Create the project directory and file path
             Path xmlFilePath;
-            if (projectFilePath == null || projectFilePath.trim().isEmpty()) {
-                Path locationPath = Paths.get(projectLocation);
-                Path projectDirPath = locationPath.resolve(projectName);
-                
-                // Ensure the filename has an .xml extension
-                String filename = projectName + ".xml";
-                xmlFilePath = projectDirPath.resolve(filename);
-                // Don't update projectFilePath here to maintain .jpt in original path
-            } else {
-                xmlFilePath = Paths.get(projectFilePath);
-                
-                // Convert .jpt to .xml for saving
-                String xmlPathStr = xmlFilePath.toString();
-                if (xmlPathStr.toLowerCase().endsWith(".jpt")) {
-                    xmlPathStr = xmlPathStr.substring(0, xmlPathStr.length() - 4) + ".xml";
-                    xmlFilePath = Paths.get(xmlPathStr);
-                } 
-                // If the file doesn't end with .xml or .jpt, add .xml
-                else if (!xmlPathStr.toLowerCase().endsWith(".xml")) {
-                    xmlFilePath = Paths.get(xmlPathStr + ".xml");
-                }
-                // Note: we don't update projectFilePath to keep the original .jpt extension
-            }
+            Path projectDirPath;
             
-            // Ensure parent directories exist
+            // Create the project directory path
+            Path locationPath = Paths.get(projectLocation);
+            projectDirPath = locationPath.resolve(projectName);
+            
+            // Set the XML file path to be project.xml inside the project directory
+            xmlFilePath = projectDirPath.resolve("project.xml");
+            
+            // Update the projectFilePath to match the new structure
+            projectFilePath = xmlFilePath.toString();
+            
+            // Create the project directory
             try {
-                Path parentDir = xmlFilePath.getParent();
-                if (parentDir != null) {
-                    Files.createDirectories(parentDir);
+                // Create the project directory
+                Files.createDirectories(projectDirPath);
+                
+                // Verify the project directory was created successfully
+                if (!Files.exists(projectDirPath)) {
+                    System.err.println("Error: Failed to create project directory: " + projectDirPath);
+                    return false;
+                }
+                
+                // Create template file if template file type is set
+                if (templateFileType != null) {
+                    // Create template file with appropriate extension
+                    String templateExtension = getTemplateFileExtension();
+                    Path templatePath = projectDirPath.resolve("template" + templateExtension);
                     
-                    // Verify the directories were created successfully
-                    if (!Files.exists(parentDir)) {
-                        System.err.println("Error: Failed to create directory: " + parentDir);
-                        return false;
+                    // Get content from resource template
+                    String templateContent = getResourceTemplateContent();
+                    
+                    // Create template file if it doesn't exist
+                    if (!Files.exists(templatePath)) {
+                        try {
+                            // Create the file and write the template content
+                            Files.writeString(templatePath, templateContent, StandardCharsets.UTF_8);
+                            // Update templateFilePath field with the new path
+                            this.templateFilePath = templatePath.toString();
+                            System.out.println("Created template file: " + templatePath);
+                        } catch (IOException e) {
+                            System.err.println("Error: Failed to create template file: " + e.getMessage());
+                            // Continue with save even if template file creation fails
+                        }
+                    } else {
+                        // Update templateFilePath field with existing path
+                        this.templateFilePath = templatePath.toString();
+                        System.out.println("Template file already exists: " + templatePath);
                     }
                 }
+                
+                // Log successful directory creation
+                System.out.println("Created project directory: " + projectDirPath);
             } catch (IOException e) {
-                System.err.println("Error: Failed to create directories: " + e.getMessage());
+                System.err.println("Error: Failed to create project directory: " + e.getMessage());
                 return false;
             } catch (SecurityException e) {
-                System.err.println("Error: Permission denied when creating directories: " + e.getMessage());
+                System.err.println("Error: Permission denied when creating project directory: " + e.getMessage());
                 return false;
             }
             
@@ -281,15 +432,18 @@ public class ProjectFile {
             // Configure the marshaller for pretty-printing
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             
-            // Create parent directories if they don't exist
+            // Get the output file
             File outputFile = xmlFilePath.toFile();
-            File parentDirectory = outputFile.getParentFile();
-            if (parentDirectory != null && !parentDirectory.exists()) {
-                boolean dirCreated = parentDirectory.mkdirs();
+            
+            // Double-check the project directory exists
+            File projectDir = projectDirPath.toFile();
+            if (!projectDir.exists()) {
+                boolean dirCreated = projectDir.mkdirs();
                 if (!dirCreated) {
-                    System.err.println("Error: Failed to create directories using File.mkdirs(): " + parentDirectory);
+                    System.err.println("Error: Failed to create project directory using File.mkdirs(): " + projectDir);
                     return false;
                 }
+                System.out.println("Created project directory using mkdirs(): " + projectDir);
             }
             
             // Marshal the object to XML file
@@ -319,6 +473,8 @@ public class ProjectFile {
                 System.err.println("Error: File was not created at: " + xmlFilePath);
                 return false;
             }
+            
+            System.out.println("Project file saved successfully at: " + xmlFilePath);
             
             try {
                 long fileSize = Files.size(xmlFilePath);
@@ -361,18 +517,21 @@ public class ProjectFile {
         }
 
         try {
-            // Handle file extension
+            // Handle various path formats
             Path filePath = Paths.get(projectFilePath);
-            String pathStr = filePath.toString();
             
-            // If the path ends with .jpt but we need .xml for loading
-            if (pathStr.toLowerCase().endsWith(".jpt")) {
-                String xmlPath = pathStr.substring(0, pathStr.length() - 4) + ".xml";
+            // If the path refers to a directory, assume it's a project directory and look for project.xml inside
+            if (Files.isDirectory(filePath)) {
+                filePath = filePath.resolve("project.xml");
+            } 
+            // If the path ends with .jpt, convert to .xml
+            else if (projectFilePath.toLowerCase().endsWith(".jpt")) {
+                String xmlPath = projectFilePath.substring(0, projectFilePath.length() - 4) + ".xml";
                 filePath = Paths.get(xmlPath);
             } 
             // If no extension is provided, add .xml
-            else if (!pathStr.toLowerCase().endsWith(".xml")) {
-                filePath = Paths.get(pathStr + ".xml");
+            else if (!projectFilePath.toLowerCase().endsWith(".xml")) {
+                filePath = Paths.get(projectFilePath + ".xml");
             }
             
             // Check if the file exists
@@ -390,6 +549,11 @@ public class ProjectFile {
             
             // Set the project file path to the original path to maintain consistency
             projectFile.setProjectFilePath(projectFilePath);
+            
+            // Verify templateFileType is set
+            if (projectFile.getTemplateFileType() == null) {
+                System.out.println("Warning: Project file does not specify a template type");
+            }
             
             return projectFile;
             
