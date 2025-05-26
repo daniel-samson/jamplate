@@ -21,6 +21,8 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.controlsfx.control.action.Action;
@@ -31,9 +33,13 @@ import org.controlsfx.glyphfont.GlyphFontRegistry;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HelloController {
@@ -52,6 +58,7 @@ public class HelloController {
     
     @FXML private MenuItem menuNew;
     @FXML private MenuItem menuOpen;
+    @FXML private MenuItem menuImportCSV;
     @FXML private MenuItem menuSave;
     @FXML private MenuItem menuCut;
     @FXML private MenuItem menuCopy;
@@ -838,5 +845,98 @@ public class HelloController {
      */
     protected ProjectFile createProjectFile(String projectName, String directory, TemplateFileType templateType) {
         return new ProjectFile(projectName, directory, templateType);
+    }
+    
+    /**
+     * Handles importing variables from a CSV file.
+     * Opens a file chooser dialog, reads the CSV headers, and creates variables 
+     * with default type="Text" and empty value.
+     */
+    @FXML
+    private void handleImportCSV() {
+        // Create a file chooser dialog
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import Variables from CSV");
+        fileChooser.getExtensionFilters().addAll(
+            new ExtensionFilter("CSV Files", "*.csv"),
+            new ExtensionFilter("All Files", "*.*")
+        );
+        
+        // Get the owner window
+        Window owner = variableList.getScene().getWindow();
+        
+        // Show the file chooser dialog
+        File selectedFile = fileChooser.showOpenDialog(owner);
+        
+        if (selectedFile != null) {
+            try {
+                // Read the CSV file to extract headers
+                List<String> headers = readCSVHeaders(selectedFile);
+                
+                if (headers.isEmpty()) {
+                    showErrorDialog(
+                        "CSV Import Error",
+                        "No Headers Found",
+                        "The selected CSV file does not contain any headers."
+                    );
+                    return;
+                }
+                
+                // Clear existing variables
+                variables.clear();
+                
+                // Create new variables from headers
+                for (String header : headers) {
+                    // Create a new variable with the header as name, type="Text", and empty value
+                    Variable variable = new Variable(header, "Text", "");
+                    variables.add(variable);
+                }
+                
+                // Show success message
+                showSuccessMessage("Imported " + headers.size() + " variables from CSV");
+                
+                // Switch to Variables tab if not already there
+                mainTabPane.getSelectionModel().select(0); // Variables tab is at index 0
+                
+            } catch (IOException e) {
+                showErrorDialog(
+                    "CSV Import Error",
+                    "Failed to Read CSV File",
+                    "An error occurred while reading the CSV file: " + e.getMessage()
+                );
+                System.err.println("Error reading CSV file: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Reads the headers (first line) from a CSV file.
+     * 
+     * @param csvFile The CSV file to read
+     * @return A list of header strings
+     * @throws IOException If an I/O error occurs
+     */
+    private List<String> readCSVHeaders(File csvFile) throws IOException {
+        List<String> headers = new ArrayList<>();
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
+            // Read the first line (headers)
+            String headerLine = reader.readLine();
+            
+            if (headerLine != null && !headerLine.trim().isEmpty()) {
+                // Split the header line by comma
+                String[] headerArray = headerLine.split(",");
+                
+                // Add each header to the list, trimming whitespace
+                for (String header : headerArray) {
+                    String trimmedHeader = header.trim();
+                    if (!trimmedHeader.isEmpty()) {
+                        headers.add(trimmedHeader);
+                    }
+                }
+            }
+        }
+        
+        return headers;
     }
 }
