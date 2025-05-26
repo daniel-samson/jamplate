@@ -9,6 +9,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.application.Platform;
+import javafx.stage.Window;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
@@ -117,6 +118,24 @@ public class HelloController {
     private void handleAbout() {
         AboutDialog aboutDialog = new AboutDialog(menuAbout.getParentPopup().getOwnerWindow());
         aboutDialog.showAndWait();
+    }
+    
+    @FXML
+    private void handleNew() {
+        // Get the owner window (could be from toolbar button or menu item)
+        Window owner = btnNew.getScene().getWindow();
+        
+        // Create and show the dialog
+        CreateProjectDialog dialog = new CreateProjectDialog(owner);
+        dialog.showAndWait().ifPresent(result -> {
+            String directory = result.getKey();
+            String projectName = result.getValue();
+            System.out.println("Creating new project:");
+            System.out.println("Location: " + directory);
+            System.out.println("Project Name: " + projectName);
+            
+            // TODO: Actual project creation logic will go here
+        });
     }
 
     @FXML
