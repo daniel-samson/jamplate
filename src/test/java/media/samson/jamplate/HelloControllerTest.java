@@ -560,5 +560,298 @@ private void updateButtonStates(boolean isVariablesTab) {
         assertFalse(addButton.isDisable(), "Add button should remain enabled");
         assertTrue(removeButton.isDisable(), "Remove button should be disabled when no variables are selected");
     }
+    
+    /**
+     * Tests projectExistsInDirectory method for validating directories.
+     */
+    @Test
+    @DisplayName("Project directory validation works correctly")
+    public void testProjectDirectoryValidation() throws Exception {
+        // Get access to the private method using reflection
+        Method projectExistsInDirectory = HelloController.class.getDeclaredMethod(
+            "projectExistsInDirectory", String.class);
+        projectExistsInDirectory.setAccessible(true);
+        
+        // Create a temporary directory structure for testing
+        Path tempDir = Files.createTempDirectory("jamplateTest");
+        Path projectDir = Files.createDirectory(tempDir.resolve("TestProject"));
+        
+        // Valid project - create project.xml file
+        Path validProjectFile = Files.createFile(projectDir.resolve("project.xml"));
+        Files.writeString(validProjectFile, "<project></project>");
+        
+        // Invalid project - directory without project.xml
+        Path emptyDir = Files.createDirectory(tempDir.resolve("EmptyDir"));
+        
+        // Test validation
+        boolean validResult = (boolean) projectExistsInDirectory.invoke(controller, projectDir.toString());
+        boolean invalidResult = (boolean) projectExistsInDirectory.invoke(controller, emptyDir.toString());
+        
+        assertTrue(validResult, "Directory with project.xml should be recognized as valid");
+        assertFalse(invalidResult, "Directory without project.xml should be recognized as invalid");
+        
+        // Clean up
+        deleteDirectoryRecursively(tempDir);
+    }
+    
+    /**
+     * Tests project loading functionality.
+     */
+    @Test
+    @DisplayName("Project loading updates UI correctly")
+    public void testProjectLoading() throws Exception {
+        // Get access to the private method using reflection
+        Method loadProjectFromDirectory = HelloController.class.getDeclaredMethod(
+            "loadProjectFromDirectory", String.class);
+        loadProjectFromDirectory.setAccessible(true);
+        
+        // Create a mock ProjectFile
+        ProjectFile mockProject = Mockito.mock(ProjectFile.class);
+        when(mockProject.getProjectName()).thenReturn("TestProject");
+        when(mockProject.getTemplateFilePath()).thenReturn("/test/path/template.txt");
+        when(mockProject.loadVariables()).thenReturn(List.of(
+            new Variable("TestVar1", "String", "Value1"),
+            new Variable("TestVar2", "Integer", "42")
+        ));
+        
+        // Mock ProjectFile.open to return our mock
+        try (var mockedStatic = mockStatic(ProjectFile.class)) {
+            mockedStatic.when(() -> ProjectFile.open(anyString())).thenReturn(mockProject);
+            
+            // Setup a spy on the controller to verify method calls
+            FxRobot robot = new FxRobot();
+            
+            // Call the method on the JavaFX thread
+            robot.interact(() -> {
+                try {
+                    loadProjectFromDirectory.invoke(spyController, "/test/path");
+                } catch (Exception e) {
+                    fail("Failed to invoke loadProjectFromDirectory: " + e.getMessage());
+                }
+            });
+            
+            // Wait briefly for UI updates to complete
+            robot.sleep(100);
+            
+            // Verify projectFile was set
+            Field projectFileField = HelloController.class.getDeclaredField("projectFile");
+            projectFileField.setAccessible(true);
+            ProjectFile loadedProject = (ProjectFile) projectFileField.get(spyController);
+            assertSame(mockProject, loadedProject, "Project file should be set correctly");
+            
+            // Verify variables were loaded
+            assertEquals(2, variables.size(), "Variables should be loaded from the project");
+            
+            // Verify save button is enabled
+            assertFalse(btnSave.isDisable(), "Save button should be enabled after project is loaded");
+            assertFalse(menuSave.isDisable(), "Save menu item should be enabled after project is loaded");
+        }
+    }
+    
+    /**
+     * Tests error handling when project loading fails.
+     */
+    @Test
+    @DisplayName("Error handling when project loading fails")
+    public void testProjectLoadingError() throws Exception {
+        // Get access to the private method using reflection
+        Method loadProjectFromDirectory = HelloController.class.getDeclaredMethod(
+            "loadProjectFromDirectory", String.class);
+        loadProjectFromDirectory.setAccessible(true);
+        
+        // Mock ProjectFile.open to return null (simulating failure)
+        try (var mockedStatic = mockStatic(ProjectFile.class)) {
+            mockedStatic.when(() -> ProjectFile.open(anyString())).thenReturn(null);
+            
+            // Spy on showErrorDialog to verify it's called
+            doNothing().when(spyController).showErrorDialog(anyString(), anyString(), anyString());
+            
+            // Call the method on the JavaFX thread
+            FxRobot robot = new FxRobot();
+            robot.interact(() -> {
+                try {
+                    loadProjectFromDirectory.invoke(spyController, "/test/path");
+                } catch (Exception e) {
+                    fail("Failed to invoke loadProjectFromDirectory: " + e.getMessage());
+                }
+            });
+            
+            // Verify showErrorDialog was called with appropriate parameters
+            verify(spyController).showErrorDialog(
+                eq("Error Opening Project"),
+                eq("Project Loading Failed"),
+                anyString()
+            );
+        }
+    }
+    
+    /**
+     * Tests the create new project prompt functionality.
+     */
+    @Test
+    @DisplayName("Create new project prompt shows correctly")
+    public void testCreateNewProjectPrompt() throws Exception {
+        // Get access to the private method using reflection
+        Method showCreateNewProjectPrompt = HelloController.class.getDeclaredMethod(
+            "showCreateNewProjectPrompt", String.class);
+        showCreateNewProjectPrompt.setAccessible(true);
+        
+        // Mock the Alert creation and showAndWait
+        try (var mockedAlert = mockConstructionWithAnswer(Alert.class, invocation -> {
+            // Return a dummy ButtonType.YES when showAndWait is called
+            if (invocation.getMethod().getName().equals("showAndWait")) {
+                return java.util.Optional.of(ButtonType.YES);
+            }
+            return invocation.callRealMethod();
+        })) {
+            // Mock showCreateProjectDialogWithLocation to verify it's called
+            Method showCreateProjectDialogWithLocation = HelloController.class.getDeclaredMethod(
+                "showCreateProjectDialogWithLocation", String.class);
+            showCreateProjectDialogWithLocation.setAccessible(true);
+            
+            // Create a spy on this method
+            HelloController controllerSpy = spy(controller);
+            doNothing().when(controllerSpy).showCreateProjectDialogWithLocation(anyString());
+            
+            // Call the method on the JavaFX thread
+            FxRobot robot = new FxRobot();
+            robot.interact(() -> {
+                try {
+                    showCreateNewProjectPrompt.invoke(controllerSpy, "/test/path");
+                } catch (Exception e) {
+                    fail("Failed to invoke showCreateNewProjectPrompt: " + e.getMessage());
+                }
+            });
+            
+            // Verify showCreateProjectDialogWithLocation was called with the correct path
+            verify(controllerSpy).showCreateProjectDialogWithLocation(eq("/test/path"));
+        }
+    }
+    
+    /**
+     * Tests CreateProjectDialog integration when user chooses to create a new project.
+     */
+    @Test
+    @DisplayName("CreateProjectDialog integration with pre-populated location")
+    public void testCreateProjectDialogIntegration() throws Exception {
+        // This test is more challenging to implement fully due to dialog interactions
+        // We'll focus on verifying the method is called correctly
+        
+        // Mock the showCreateProjectDialogWithLocation method
+        Method showCreateProjectDialogWithLocation = HelloController.class.getDeclaredMethod(
+            "showCreateProjectDialogWithLocation", String.class);
+        showCreateProjectDialogWithLocation.setAccessible(true);
+        
+        // Create a test directory path
+        String testDirectory = "/test/directory/path";
+        
+        // Get access to handleOpen method
+        Method handleOpen = HelloController.class.getDeclaredMethod("handleOpen");
+        handleOpen.setAccessible(true);
+        
+        // Create a spy controller that:
+        // 1. Returns false for projectExistsInDirectory
+        // 2. Verifies showCreateNewProjectPrompt is called
+        HelloController controllerSpy = spy(controller);
+        doReturn(false).when(controllerSpy).projectExistsInDirectory(anyString());
+        doNothing().when(controllerSpy).showCreateNewProjectPrompt(anyString());
+        
+        // Mock OpenProjectDialog to return our test path
+        try (var mockedDialog = mockConstruction(OpenProjectDialog.class, (mock, context) -> {
+            when(mock.showAndWait()).thenReturn(java.util.Optional.of(testDirectory));
+        })) {
+            // Call handleOpen on the JavaFX thread
+            FxRobot robot = new FxRobot();
+            robot.interact(() -> {
+                try {
+                    handleOpen.invoke(controllerSpy);
+                } catch (Exception e) {
+                    fail("Failed to invoke handleOpen: " + e.getMessage());
+                }
+            });
+            
+            // Verify showCreateNewProjectPrompt was called with the correct directory
+            verify(controllerSpy).showCreateNewProjectPrompt(eq(testDirectory));
+        }
+    }
+    
+    /**
+     * Tests the save functionality with an open project.
+     */
+    @Test
+    @DisplayName("Save functionality works correctly with open project")
+    public void testSaveFunctionality() throws Exception {
+        // Get access to the private handleSave method using reflection
+        Method handleSave = HelloController.class.getDeclaredMethod("handleSave");
+        handleSave.setAccessible(true);
+        
+        // Create a mock ProjectFile
+        ProjectFile mockProject = Mockito.mock(ProjectFile.class);
+        when(mockProject.getTemplateFilePath()).thenReturn("/test/path/template.txt");
+        when(mockProject.save()).thenReturn(true);
+        
+        // Set the mock project in the controller
+        Field projectFileField = HelloController.class.getDeclaredField("projectFile");
+        projectFileField.setAccessible(true);
+        
+        // Mock success message to avoid UI updates
+        doNothing().when(spyController).showSuccessMessage(anyString());
+        
+        // Set the project and call handleSave
+        FxRobot robot = new FxRobot();
+        robot.interact(() -> {
+            try {
+                projectFileField.set(spyController, mockProject);
+                handleSave.invoke(spyController);
+            } catch (Exception e) {
+                fail("Exception during test: " + e.getMessage());
+            }
+        });
+        
+        // Verify saveVariables was called
+        verify(mockProject).saveVariables(same(variables));
+        
+        // Verify save was called
+        verify(mockProject).save();
+        
+        // Verify success message was shown
+        verify(spyController).showSuccessMessage(eq("Project saved successfully"));
+    }
+    
+    /**
+     * Tests the save functionality with no open project.
+     */
+    @Test
+    @DisplayName("Save functionality handles no open project")
+    public void testSaveFunctionalityNoProject() throws Exception {
+        // Get access to the private handleSave method using reflection
+        Method handleSave = HelloController.class.getDeclaredMethod("handleSave");
+        handleSave.setAccessible(true);
+        
+        // Set null project in controller
+        Field projectFileField = HelloController.class.getDeclaredField("projectFile");
+        projectFileField.setAccessible(true);
+        
+        // Mock error dialog to avoid UI updates
+        doNothing().when(spyController).showErrorDialog(anyString(), anyString(), anyString());
+        
+        // Set null project and call handleSave
+        FxRobot robot = new FxRobot();
+        robot.interact(() -> {
+            try {
+                projectFileField.set(spyController, null);
+                handleSave.invoke(spyController);
+            } catch (Exception e) {
+                fail("Exception during test: " + e.getMessage());
+            }
+        });
+        
+        // Verify error dialog was shown
+        verify(spyController).showErrorDialog(
+            eq("Save Error"),
+            eq("No Project Open"),
+            eq("There is no project currently open to save.")
+        );
+    }
 }
 

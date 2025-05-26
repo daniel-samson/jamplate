@@ -13,7 +13,7 @@
           <Menu text="_File">
             <items>
               <MenuItem fx:id="menuNew" text="_New" accelerator="shortcut+N" onAction="#handleNew" />
-              <MenuItem fx:id="menuOpen" text="_Open..." accelerator="shortcut+O" />
+              <MenuItem fx:id="menuOpen" text="_Open..." accelerator="shortcut+O" onAction="#handleOpen" />
               <MenuItem fx:id="menuSave" text="_Save" accelerator="shortcut+S" />
               <SeparatorMenuItem />
               <MenuItem text="Exit" />
@@ -50,7 +50,7 @@
       <ToolBar fx:id="toolbar">
         <items>
           <Button fx:id="btnNew" text="New" onAction="#handleNew" />
-          <Button fx:id="btnOpen" text="Open" />
+          <Button fx:id="btnOpen" text="Open" onAction="#handleOpen" />
           <Button fx:id="btnSave" text="Save" />
           <Separator />
           <Button fx:id="btnCut" text="Cut" />

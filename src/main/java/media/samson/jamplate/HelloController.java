@@ -1,27 +1,28 @@
 package media.samson.jamplate;
 
-import java.util.List;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
-import javafx.scene.input.KeyCode;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
-import javafx.scene.control.ListCell;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
@@ -29,6 +30,11 @@ import org.controlsfx.glyphfont.GlyphFont;
 import org.controlsfx.glyphfont.GlyphFontRegistry;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class HelloController {
     /**
@@ -207,6 +213,14 @@ public class HelloController {
         // Ensure initial status bar visibility matches the menuShowStatusBar state
         statusBar.setVisible(menuShowStatusBar.isSelected());
         statusBar.setManaged(menuShowStatusBar.isSelected());
+        
+        // Connect the Open menu item and toolbar button to the handleOpen method
+        btnOpen.setOnAction(event -> handleOpen());
+        menuOpen.setOnAction(event -> handleOpen());
+        
+        // Connect the Save menu item and toolbar button to the handleSave method
+        btnSave.setOnAction(event -> handleSave());
+        menuSave.setOnAction(event -> handleSave());
     }
     
     private void updateEditButtonStates(boolean isVariablesTab) {
@@ -334,6 +348,92 @@ public class HelloController {
         aboutDialog.showAndWait();
     }
     
+    /**
+     * Handles the "Save Project" action from menu or toolbar.
+     * Saves the current project state including variables and template content.
+     */
+    @FXML
+    private void handleSave() {
+        // Check if we have an open project
+        if (projectFile == null) {
+            showErrorDialog(
+                "Save Error",
+                "No Project Open",
+                "There is no project currently open to save."
+            );
+            return;
+        }
+        
+        try {
+            // Save variables to the project
+            projectFile.saveVariables(variables);
+            
+            // Save template content
+            String templatePath = projectFile.getTemplateFilePath();
+            if (templatePath != null && !templatePath.isEmpty()) {
+                String content = templateEditor.getText();
+                Files.writeString(Paths.get(templatePath), content);
+            }
+            
+            // Save the project file itself
+            boolean saveResult = projectFile.save();
+            
+            if (saveResult) {
+                // Show success message in status bar or alert
+                showSuccessMessage("Project saved successfully");
+            } else {
+                showErrorDialog(
+                    "Save Error",
+                    "Failed to Save Project",
+                    "The project file could not be saved. Please check file permissions."
+                );
+            }
+        } catch (IOException e) {
+            showErrorDialog(
+                "Save Error",
+                "File Operation Failed",
+                "An error occurred while saving: " + e.getMessage()
+            );
+            System.err.println("Error saving project: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Shows a success message to the user.
+     * Currently displays in the status bar if available, otherwise shows an information alert.
+     * 
+     * @param message The success message to display
+     */
+    private void showSuccessMessage(String message) {
+        // Try to find a label in the status bar
+        Label statusLabel = (Label) statusBar.getChildren().stream()
+            .filter(node -> node instanceof Label)
+            .findFirst()
+            .orElse(null);
+        
+        if (statusLabel != null) {
+            // Update status bar message
+            statusLabel.setText("Status: " + message);
+            
+            // Reset the message after a delay
+            new Thread(() -> {
+                try {
+                    Thread.sleep(5000);
+                    Platform.runLater(() -> statusLabel.setText("Status: Ready"));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        } else {
+            // If no status bar is available, show an information alert
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Success");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        }
+    }
+    
     @FXML
     private void handleNew() {
         // Get the owner window (could be from toolbar button or menu item)
@@ -355,6 +455,131 @@ public class HelloController {
         });
     }
     
+    /**
+     * Handles the "Open Project" action from menu or toolbar.
+     * Shows a dialog to select a project directory and loads the project if it exists.
+     */
+    @FXML
+    private void handleOpen() {
+        // Get the owner window
+        Window owner = btnOpen.getScene().getWindow();
+        
+        // Create and show the open project dialog
+        OpenProjectDialog dialog = new OpenProjectDialog(owner);
+        dialog.showAndWait().ifPresent(selectedDirectory -> {
+            if (selectedDirectory != null && !selectedDirectory.isEmpty()) {
+                // Check if directory contains a valid project file
+                if (projectExistsInDirectory(selectedDirectory)) {
+                    // Load the project
+                    loadProjectFromDirectory(selectedDirectory);
+                } else {
+                    // Project doesn't exist, ask if user wants to create a new one
+                    showCreateNewProjectPrompt(selectedDirectory);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Checks if a project file exists in the specified directory.
+     * 
+     * @param directory The directory to check
+     * @return true if a project file exists, false otherwise
+     */
+    private boolean projectExistsInDirectory(String directory) {
+        // Check for project.xml file in the directory
+        String projectFilePath = Paths.get(directory, "project.xml").toString();
+        return Files.exists(Paths.get(projectFilePath));
+    }
+    
+    /**
+     * Loads a project from the specified directory.
+     * 
+     * @param directory The directory containing the project
+     */
+    private void loadProjectFromDirectory(String directory) {
+        // Try to open project file from directory
+        String projectFilePath = Paths.get(directory, "project.xml").toString();
+        ProjectFile loadedProject = ProjectFile.open(projectFilePath);
+        
+        if (loadedProject != null) {
+            // Clear existing data
+            variables.clear();
+            templateEditor.clear();
+            
+            // Set the new project file
+            projectFile = loadedProject;
+            
+            // Update UI with loaded project
+            updateUIForProject();
+            
+            // Update window title
+            if (btnOpen.getScene() != null && btnOpen.getScene().getWindow() instanceof Stage) {
+                ((Stage) btnOpen.getScene().getWindow()).setTitle("Jamplate - " + projectFile.getProjectName());
+            }
+        } else {
+            // Show error dialog
+            showErrorDialog(
+                "Error Opening Project",
+                "Project Loading Failed",
+                "Failed to load the project. The project file may be corrupted or inaccessible."
+            );
+        }
+    }
+    
+    /**
+     * Shows a prompt asking if the user wants to create a new project in the specified directory.
+     * 
+     * @param directory The directory where the new project would be created
+     */
+    private void showCreateNewProjectPrompt(String directory) {
+        Alert alert = new Alert(
+            AlertType.CONFIRMATION,
+            "No project found in the selected directory. Would you like to create a new project?",
+            ButtonType.YES,
+            ButtonType.NO
+        );
+        alert.setTitle("Create New Project");
+        alert.setHeaderText("Project Not Found");
+        
+        // Set the owner window
+        if (btnOpen.getScene() != null && btnOpen.getScene().getWindow() != null) {
+            alert.initOwner(btnOpen.getScene().getWindow());
+        }
+        
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                // Launch CreateProjectDialog with pre-populated location
+                showCreateProjectDialogWithLocation(directory);
+            }
+        });
+    }
+    
+    /**
+     * Shows the CreateProjectDialog with a pre-populated location.
+     * 
+     * @param directory The directory to pre-populate in the dialog
+     */
+    private void showCreateProjectDialogWithLocation(String directory) {
+        Window owner = btnOpen.getScene().getWindow();
+        CreateProjectDialog dialog = new CreateProjectDialog(owner);
+        
+        // Access the directory field using lookup
+        TextField directoryField = (TextField) dialog.getDialogPane().lookup("#directoryField");
+        if (directoryField != null) {
+            directoryField.setText(directory);
+        }
+        
+        // Show the dialog and handle the result
+        dialog.showAndWait().ifPresent(result -> {
+            String projectDirectory = result.getDirectory();
+            String projectName = result.getProjectName();
+            TemplateFileType templateType = result.getTemplateFileType();
+            
+            handleNewProjectInternal(projectDirectory, projectName, templateType);
+        });
+    }
+
     /**
      * Internal method to handle new project creation.
      * Extracted for better testability.
@@ -489,7 +714,21 @@ public class HelloController {
             List<Variable> loadedVariables = projectFile.loadVariables();
             variables.setAll(loadedVariables);
             
-            // Here you could also load template content if needed
+            // Load template content
+            try {
+                String templatePath = projectFile.getTemplateFilePath();
+                if (templatePath != null && !templatePath.isEmpty()) {
+                    String content = Files.readString(Paths.get(templatePath));
+                    templateEditor.replaceText(content);
+                }
+            } catch (IOException e) {
+                System.err.println("Error loading template content: " + e.getMessage());
+                showErrorDialog(
+                    "Error Loading Template",
+                    "Template Loading Failed",
+                    "Failed to load the template content. The file may be inaccessible."
+                );
+            }
         } else {
             variables.clear();
             templateEditor.clear();
