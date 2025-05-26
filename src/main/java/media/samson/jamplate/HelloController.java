@@ -9,6 +9,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.application.Platform;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.glyphfont.FontAwesome;
@@ -17,6 +18,10 @@ import org.controlsfx.glyphfont.GlyphFont;
 import org.controlsfx.glyphfont.GlyphFontRegistry;
 
 public class HelloController {
+    /**
+     * The current project file being worked on.
+     */
+    private ProjectFile projectFile;
     @FXML private Button btnNew;
     @FXML private Button btnOpen;
     @FXML private Button btnSave;
@@ -134,7 +139,19 @@ public class HelloController {
             System.out.println("Location: " + directory);
             System.out.println("Project Name: " + projectName);
             
-            // TODO: Actual project creation logic will go here
+            // Create a new ProjectFile instance
+            ProjectFile newProject = new ProjectFile(projectName, directory);
+            
+            // Save the project file
+            boolean saveResult = newProject.save();
+            if (saveResult) {
+                // Set as current project
+                setProjectFile(newProject);
+                System.out.println("Project file created successfully at: " + newProject.getProjectFilePath());
+            } else {
+                // TODO: Show error dialog
+                System.err.println("Failed to create project file.");
+            }
         });
     }
 
@@ -165,5 +182,46 @@ public class HelloController {
     private boolean isMac() {
         String osName = System.getProperty("os.name").toLowerCase();
         return osName.contains("mac");
+    }
+    
+    /**
+     * Gets the current project file.
+     * 
+     * @return The current ProjectFile, or null if no project is open
+     */
+    public ProjectFile getProjectFile() {
+        return projectFile;
+    }
+    
+    /**
+     * Sets the current project file.
+     * 
+     * @param projectFile The ProjectFile to set as current
+     */
+    public void setProjectFile(ProjectFile projectFile) {
+        this.projectFile = projectFile;
+        
+        // Update UI based on project file
+        updateUIForProject();
+    }
+    
+    /**
+     * Updates the UI components based on the current project file.
+     * This method should be called whenever the project file changes.
+     */
+    private void updateUIForProject() {
+        boolean hasProject = (projectFile != null);
+        
+        // Enable/disable project-specific actions based on whether a project is loaded
+        btnSave.setDisable(!hasProject);
+        menuSave.setDisable(!hasProject);
+        
+        // Update window title to reflect current project
+        if (hasProject && btnSave.getScene() != null && btnSave.getScene().getWindow() != null) {
+            Window window = btnSave.getScene().getWindow();
+            if (window instanceof Stage) {
+                ((Stage) window).setTitle("Jamplate - " + projectFile.getProjectName());
+            }
+        }
     }
 }
