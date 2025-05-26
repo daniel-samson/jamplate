@@ -126,7 +126,7 @@ public class HelloController {
     }
     
     @FXML
-    private void handleNew() {
+        private void handleNew() {
         // Get the owner window (could be from toolbar button or menu item)
         Window owner = btnNew.getScene().getWindow();
         
@@ -139,27 +139,28 @@ public class HelloController {
             System.out.println("Location: " + directory);
             System.out.println("Project Name: " + projectName);
             
-            // First create a temporary ProjectFile instance to handle initial file creation
-            // This step is necessary to generate the file that open() will load
-            ProjectFile tempProject = new ProjectFile(projectName, directory);
-            boolean saveResult = tempProject.save();
+            // Create the ProjectFile directly as the class property
+            projectFile = new ProjectFile(projectName, directory);
+            boolean saveResult = projectFile.save();
             
             if (saveResult) {
-                // Get the file path for the created project
-                String projectFilePath = tempProject.getProjectFilePath();
+                // Store the file path for reference
+                String projectFilePath = projectFile.getProjectFilePath();
                 
-                // Use open() to load the project (this method will be enhanced later)
-                ProjectFile newProject = ProjectFile.open(projectFilePath);
+                // Reload the project using open() (this method will be enhanced later)
+                projectFile = ProjectFile.open(projectFilePath);
                 
-                if (newProject != null) {
-                    // Set as current project
-                    setProjectFile(newProject);
+                if (projectFile != null) {
+                    // Update UI to reflect the new project
+                    updateUIForProject();
                     System.out.println("Project file created successfully at: " + projectFilePath);
                 } else {
                     // TODO: Show error dialog
                     System.err.println("Failed to open project file after creation.");
                 }
             } else {
+                // Reset the property since save failed
+                projectFile = null;
                 // TODO: Show error dialog
                 System.err.println("Failed to create project file.");
             }
