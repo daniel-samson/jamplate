@@ -214,16 +214,25 @@ public class HelloController {
         boolean hasTemplateSelection = templateEditor.getSelectedText().length() > 0;
         
         if (isVariablesTab) {
-            btnCut.setDisable(!hasVariableSelection);
-            btnCopy.setDisable(!hasVariableSelection);
-            // Paste is always enabled for Variables tab as we can always add new variables
-            btnPaste.setDisable(false);
+            // Disable cut, copy, paste buttons in Variables tab
+            btnCut.setDisable(true);
+            btnCopy.setDisable(true);
+            btnPaste.setDisable(true);
+            
+            // Enable/disable variable-specific buttons based on selection
+            removeButton.setDisable(!hasVariableSelection);
         } else {
+            // In Template tab, enable/disable based on text selection
             btnCut.setDisable(!hasTemplateSelection);
             btnCopy.setDisable(!hasTemplateSelection);
-            // Paste is enabled if clipboard has content (simplified here)
+            // Paste is always enabled in Template tab
             btnPaste.setDisable(false);
         }
+        
+        // Update menu items to match button states
+        menuCut.setDisable(btnCut.isDisabled());
+        menuCopy.setDisable(btnCopy.isDisabled());
+        menuPaste.setDisable(btnPaste.isDisabled());
     }
 
     @FXML
