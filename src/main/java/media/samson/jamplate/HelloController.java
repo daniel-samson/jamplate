@@ -323,6 +323,47 @@ public class HelloController {
     }
     
     @FXML
+    private void handleExit() {
+        // Check if there are unsaved changes
+        boolean hasUnsavedChanges = false;
+        
+        // Check if we have an open project with unsaved changes
+        if (projectFile != null) {
+            // In a real implementation, you would check for unsaved changes here
+            // For now, we'll assume there are no unsaved changes
+            hasUnsavedChanges = false;
+        }
+        
+        // If there are unsaved changes, ask the user for confirmation
+        if (hasUnsavedChanges) {
+            Alert alert = new Alert(
+                AlertType.CONFIRMATION,
+                "You have unsaved changes. Are you sure you want to exit?",
+                ButtonType.YES,
+                ButtonType.NO
+            );
+            alert.setTitle("Exit Application");
+            alert.setHeaderText("Confirm Exit");
+            
+            // Set the owner window for proper dialog positioning
+            if (addButton.getScene() != null && addButton.getScene().getWindow() != null) {
+                alert.initOwner(addButton.getScene().getWindow());
+            }
+            
+            // Show dialog and handle response
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.YES) {
+                    // Exit the application
+                    Platform.exit();
+                }
+            });
+        } else {
+            // No unsaved changes, exit directly
+            Platform.exit();
+        }
+    }
+    
+    @FXML
     private void handleUndo() {
         if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Template")) {
             templateEditor.undo();

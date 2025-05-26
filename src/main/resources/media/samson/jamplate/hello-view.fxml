@@ -16,7 +16,7 @@
               <MenuItem fx:id="menuOpen" text="_Open..." accelerator="shortcut+O" onAction="#handleOpen" />
               <MenuItem fx:id="menuSave" text="_Save" accelerator="shortcut+S" />
               <SeparatorMenuItem />
-              <MenuItem text="Exit" />
+              <MenuItem fx:id="menuExit" text="E_xit" accelerator="shortcut+q" onAction="#handleExit" />
             </items>
           </Menu>
 
