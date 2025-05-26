@@ -327,9 +327,9 @@ public class ProjectFile {
     }
     
     /**
-     * Reads and processes the template content from resources, replacing placeholders with actual values.
+     * Reads the template content from resources without replacing placeholders.
      * 
-     * @return The processed template content with placeholders replaced by actual values
+     * @return The raw template content with placeholders intact
      */
     private String getResourceTemplateContent() {
         String extension = getTemplateFileExtension();
@@ -344,13 +344,7 @@ public class ProjectFile {
             // Read the template content
             String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             
-            // Replace placeholders with actual values
-            content = content.replace("{{$JamplateProjectName}}", projectName);
-            
-            // Get current timestamp in a readable format
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            content = content.replace("{{$JamplateDocumentCreateAt}}", timestamp);
-            
+            // Return the raw template content without replacing placeholders
             return content;
             
         } catch (IOException e) {

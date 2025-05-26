@@ -441,4 +441,27 @@ public class ProjectFileTest {
         assertEquals(TemplateFileType.TXT_FILE, loadedProject.getTemplateFileType(), 
                 "Template file type should be preserved in XML serialization");
     }
+    
+    @Test
+    @DisplayName("Template variables remain unmodified when creating new project")
+    void testTemplateVariablesRemainUnmodified(@TempDir Path tempDir) throws Exception {
+        // Create a project with template type
+        ProjectFile project = new ProjectFile("TemplateVarsTest", tempDir.toString(), TemplateFileType.HTML_FILE);
+        
+        // Save the project to create the template file
+        assertTrue(project.save(), "Project should save successfully");
+        
+        // Get the path to the created template file
+        String templatePath = project.getTemplateFilePath();
+        assertTrue(Files.exists(Paths.get(templatePath)), "Template file should exist after save");
+        
+        // Read the content of the template file
+        String templateContent = Files.readString(Paths.get(templatePath));
+        
+        // Verify that the template variables are still present in their original form
+        assertTrue(templateContent.contains("{{$JamplateProjectName}}"), 
+                "Template should contain the unmodified {{$JamplateProjectName}} variable");
+        assertTrue(templateContent.contains("{{$JamplateDocumentCreateAt}}"), 
+                "Template should contain the unmodified {{$JamplateDocumentCreateAt}} variable");
+    }
 }
