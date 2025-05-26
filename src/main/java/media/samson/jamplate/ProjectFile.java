@@ -3,6 +3,7 @@ package media.samson.jamplate;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
@@ -345,5 +346,65 @@ public class ProjectFile {
             return false;
         }
     }
-}
+    /**
+     * Opens a project file from the specified path.
+     * This method will try to load a project file from the given path,
+     * handling both .xml and .jpt extensions.
+     *
+     * @param projectFilePath The path to the project file to open
+     * @return A ProjectFile instance loaded from the file, or null if loading failed
+     */
+    public static ProjectFile open(String projectFilePath) {
+        if (projectFilePath == null || projectFilePath.trim().isEmpty()) {
+            System.err.println("Error: Project file path is empty");
+            return null;
+        }
 
+        try {
+            // Handle file extension
+            Path filePath = Paths.get(projectFilePath);
+            String pathStr = filePath.toString();
+            
+            // If the path ends with .jpt but we need .xml for loading
+            if (pathStr.toLowerCase().endsWith(".jpt")) {
+                String xmlPath = pathStr.substring(0, pathStr.length() - 4) + ".xml";
+                filePath = Paths.get(xmlPath);
+            } 
+            // If no extension is provided, add .xml
+            else if (!pathStr.toLowerCase().endsWith(".xml")) {
+                filePath = Paths.get(pathStr + ".xml");
+            }
+            
+            // Check if the file exists
+            if (!Files.exists(filePath)) {
+                System.err.println("Error: Project file not found at: " + filePath);
+                return null;
+            }
+            
+            // Create JAXB context for unmarshalling
+            JAXBContext context = JAXBContext.newInstance(ProjectFile.class);
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            
+            // Unmarshal the XML file
+            ProjectFile projectFile = (ProjectFile) unmarshaller.unmarshal(filePath.toFile());
+            
+            // Set the project file path to the original path to maintain consistency
+            projectFile.setProjectFilePath(projectFilePath);
+            
+            return projectFile;
+            
+        } catch (JAXBException e) {
+            System.err.println("Error parsing project file XML: " + e.getMessage());
+            return null;
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error: Invalid path specified: " + e.getMessage());
+            return null;
+        } catch (SecurityException e) {
+            System.err.println("Error: Permission denied when accessing file: " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            System.err.println("Unexpected error opening project file: " + e.getMessage());
+            return null;
+        }
+    }
+}

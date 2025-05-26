@@ -218,5 +218,120 @@ public class ProjectFileTest {
         assertDoesNotThrow(() -> projectFile.getProjectDirectoryPath(), 
                 "getProjectDirectoryPath should handle null values gracefully");
     }
+    
+    @Test
+    @DisplayName("open() loads XML file correctly")
+    void testOpenXmlFile(@TempDir Path tempDir) throws Exception {
+        // Create a test project file
+        ProjectFile originalProject = new ProjectFile("OpenTest", tempDir.toString());
+        originalProject.setTemplateFilePath("/test/template.tpl");
+        originalProject.setSampleDataPath("/test/data.json");
+        
+        // Save the project to create the XML file
+        assertTrue(originalProject.save(), "Project should save successfully");
+        
+        // Get the saved file path (should be XML)
+        Path xmlPath = tempDir.resolve("OpenTest").resolve("OpenTest.xml");
+        assertTrue(Files.exists(xmlPath), "XML file should exist before test");
+        
+        // Test opening the XML file
+        ProjectFile loadedProject = ProjectFile.open(xmlPath.toString());
+        
+        // Verify the file was loaded correctly
+        assertNotNull(loadedProject, "Loaded project should not be null");
+        assertEquals("OpenTest", loadedProject.getProjectName(), "Project name should match");
+        assertEquals(tempDir.toString(), loadedProject.getProjectLocation(), "Project location should match");
+        assertEquals("/test/template.tpl", loadedProject.getTemplateFilePath(), "Template path should match");
+        assertEquals("/test/data.json", loadedProject.getSampleDataPath(), "Sample data path should match");
+    }
+    
+    @Test
+    @DisplayName("open() handles .jpt extension correctly")
+    void testOpenJptFile(@TempDir Path tempDir) throws Exception {
+        // Create a test project file
+        ProjectFile originalProject = new ProjectFile("JptTest", tempDir.toString());
+        originalProject.setTemplateFilePath("/jpt/template.tpl");
+        
+        // Save the project to create the XML file
+        assertTrue(originalProject.save(), "Project should save successfully");
+        
+        // Get the saved file path
+        Path xmlPath = tempDir.resolve("JptTest").resolve("JptTest.xml");
+        assertTrue(Files.exists(xmlPath), "XML file should exist before test");
+        
+        // Create a path with .jpt extension
+        String jptPath = xmlPath.toString().replace(".xml", ".jpt");
+        
+        // Test opening with .jpt extension (which should be converted to .xml internally)
+        ProjectFile loadedProject = ProjectFile.open(jptPath);
+        
+        // Verify the file was loaded correctly
+        assertNotNull(loadedProject, "Loaded project should not be null");
+        assertEquals("JptTest", loadedProject.getProjectName(), "Project name should match");
+        assertEquals("/jpt/template.tpl", loadedProject.getTemplateFilePath(), "Template path should match");
+    }
+    
+    @Test
+    @DisplayName("open() handles missing extension correctly")
+    void testOpenNoExtension(@TempDir Path tempDir) throws Exception {
+        // Create a test project file
+        ProjectFile originalProject = new ProjectFile("NoExtTest", tempDir.toString());
+        
+        // Save the project to create the XML file
+        assertTrue(originalProject.save(), "Project should save successfully");
+        
+        // Get the saved file path
+        Path xmlPath = tempDir.resolve("NoExtTest").resolve("NoExtTest.xml");
+        assertTrue(Files.exists(xmlPath), "XML file should exist before test");
+        
+        // Create a path with no extension
+        String noExtPath = xmlPath.toString().replace(".xml", "");
+        
+        // Test opening without extension (which should add .xml internally)
+        ProjectFile loadedProject = ProjectFile.open(noExtPath);
+        
+        // Verify the file was loaded correctly
+        assertNotNull(loadedProject, "Loaded project should not be null");
+        assertEquals("NoExtTest", loadedProject.getProjectName(), "Project name should match");
+    }
+    
+    @Test
+    @DisplayName("open() returns null for non-existent file")
+    void testOpenNonExistentFile() {
+        // Try to open a file that doesn't exist
+        ProjectFile loadedProject = ProjectFile.open("/path/to/nonexistent/file.xml");
+        
+        // Verify result is null
+        assertNull(loadedProject, "Result should be null for non-existent file");
+    }
+    
+    @Test
+    @DisplayName("open() returns null for invalid XML file")
+    void testOpenInvalidXmlFile(@TempDir Path tempDir) throws IOException {
+        // Create an invalid XML file
+        Path invalidXmlPath = tempDir.resolve("invalid.xml");
+        Files.writeString(invalidXmlPath, "This is not valid XML content");
+        
+        // Try to open the invalid XML file
+        ProjectFile loadedProject = ProjectFile.open(invalidXmlPath.toString());
+        
+        // Verify result is null
+        assertNull(loadedProject, "Result should be null for invalid XML file");
+    }
+    
+    @Test
+    @DisplayName("open() returns null for null or empty path")
+    void testOpenNullOrEmptyPath() {
+        // Test with null path
+        ProjectFile nullResult = ProjectFile.open(null);
+        assertNull(nullResult, "Result should be null for null path");
+        
+        // Test with empty path
+        ProjectFile emptyResult = ProjectFile.open("");
+        assertNull(emptyResult, "Result should be null for empty path");
+        
+        // Test with whitespace-only path
+        ProjectFile whitespaceResult = ProjectFile.open("   ");
+        assertNull(whitespaceResult, "Result should be null for whitespace-only path");
+    }
 }
-
