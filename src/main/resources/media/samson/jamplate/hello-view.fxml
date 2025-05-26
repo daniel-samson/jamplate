@@ -1,16 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="media.samson.jamplate.HelloController">
-  <padding>
-    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-  </padding>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="media.samson.jamplate.HelloController" prefWidth="600" prefHeight="400">
 
-  <Label fx:id="welcomeText"/>
-  <Button text="Hello!" onAction="#onHelloButtonClick"/>
-</VBox>
+  <top>
+    <VBox>
+      <MenuBar>
+        <menus>
+          <Menu text="File">
+            <items>
+              <MenuItem text="New" />
+              <MenuItem text="Open..." />
+              <MenuItem text="Save" />
+              <SeparatorMenuItem />
+              <MenuItem text="Exit" />
+            </items>
+          </Menu>
+
+          <Menu text="Edit">
+            <items>
+              <MenuItem text="Undo" />
+              <MenuItem text="Redo" />
+              <SeparatorMenuItem />
+              <MenuItem text="Cut" />
+              <MenuItem text="Copy" />
+              <MenuItem text="Paste" />
+            </items>
+          </Menu>
+
+          <Menu text="View">
+            <items>
+              <CheckMenuItem text="Show Toolbar" selected="true"/>
+              <CheckMenuItem text="Show Status Bar" selected="true"/>
+            </items>
+          </Menu>
+
+          <Menu text="Help">
+            <items>
+              <MenuItem text="View Help" />
+              <MenuItem text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+
+      <ToolBar>
+        <Button fx:id="btnNew" />
+        <Button fx:id="btnOpen" />
+        <Button fx:id="btnSave" />
+        <Separator />
+        <Button fx:id="btnCut" />
+        <Button fx:id="btnCopy" />
+        <Button fx:id="btnPaste" />
+      </ToolBar>
+    </VBox>
+  </top>
+
+  <center>
+    <Label text="Welcome to the Application!" />
+  </center>
+
+  <bottom>
+    <HBox spacing="10" style="-fx-padding: 5; -fx-background-color: #e0e0e0;">
+      <Label text="Status: Ready" />
+    </HBox>
+  </bottom>
+</BorderPane>

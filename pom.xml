@@ -24,10 +24,10 @@
       <artifactId>javafx-fxml</artifactId>
       <version>21</version>
     </dependency>
-<dependency>
+    <dependency>
       <groupId>org.controlsfx</groupId>
       <artifactId>controlsfx</artifactId>
-      <version>11.2.1</version>
+      <version>11.2.0</version>
     </dependency>
 <dependency>
       <groupId>org.junit.jupiter</groupId>
