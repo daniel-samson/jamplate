@@ -209,6 +209,29 @@ public class HelloController {
         templateEditor.setParagraphGraphicFactory(LineNumberFactory.get(templateEditor));
         templateEditor.setWrapText(true);
         
+        // Add keyboard event handler for autocomplete menu
+        templateEditor.setOnKeyPressed(event -> {
+            // Close autocomplete menu on SPACE or > key press
+            if (autocompleteMenu.isShowing()) {
+                if (event.getCode() == KeyCode.SPACE || 
+                    event.getCode() == KeyCode.ESCAPE) {
+                    autocompleteMenu.hide();
+                    if (event.getCode() == KeyCode.ESCAPE) {
+                        event.consume(); // Consume ESCAPE so it doesn't propagate
+                    }
+                    // Don't consume SPACE so it gets typed
+                }
+            }
+        });
+        
+        // Add key typed handler for > character (more reliable for special characters)
+        templateEditor.setOnKeyTyped(event -> {
+            if (autocompleteMenu.isShowing() && ">".equals(event.getCharacter())) {
+                autocompleteMenu.hide();
+                // Don't consume so the > character gets typed
+            }
+        });
+        
         // Initialize syntax highlighting
         // Default to HTML, this will be updated when a project is loaded
         syntaxHighlighter = new TemplateEditorSyntaxHighlighter(templateEditor, TemplateFileType.HTML_FILE);
