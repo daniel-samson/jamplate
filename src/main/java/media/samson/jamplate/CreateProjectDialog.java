@@ -384,16 +384,14 @@ public class CreateProjectDialog extends Dialog<CreateProjectDialog.ProjectCreat
             return false;
         }
         
-        File dir = new File(directory);
-        if (!dir.exists()) {
-            showError(directoryErrorLabel, "Directory does not exist");
-            // Force layout update
-            getDialogPane().applyCss();
-            getDialogPane().layout();
-            return false;
-        }
+        // Note: We no longer check if the directory exists because ProjectFile.save()
+        // can create non-existent directories automatically. This allows users to
+        // create projects in new directories without having to create them manually first.
         
-        if (!dir.isDirectory()) {
+        // Only validate if the path is a valid directory path format
+        // We still check if an existing path is actually a directory (not a file)
+        File dir = new File(directory);
+        if (dir.exists() && !dir.isDirectory()) {
             showError(directoryErrorLabel, "Selected path is not a directory");
             // Force layout update
             getDialogPane().applyCss();

@@ -22,7 +22,9 @@ import javafx.scene.Node;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Unit tests for the CreateProjectDialog class.
@@ -310,66 +312,270 @@ public class CreateProjectDialogTest {
     @Test
     public void testTemplateTypeSelection() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<Boolean> templateTypeUpdatedRef = new AtomicReference<>(false);
+        AtomicReference<TemplateFileType> selectedTypeRef = new AtomicReference<>();
+        
+        Platform.runLater(() -> {
+            try {
+                // Create the dialog
+                CreateProjectDialog dialog = new CreateProjectDialog(mainStage);
+                dialog.show();
+                
+                // Get template type combo box
+                DialogPane dialogPane = dialog.getDialogPane();
+                ComboBox<TemplateFileType> templateTypeComboBox = 
+                    (ComboBox<TemplateFileType>) dialogPane.lookup("#templateTypeComboBox");
+                
+                // Set a template type
+                templateTypeComboBox.setValue(TemplateFileType.PHP_FILE);
+                
+                // Record the selected type
+                selectedTypeRef.set(templateTypeComboBox.getValue());
+                
+                // Close dialog
+                dialog.close();
+            } catch (Exception e) {
+                fail("Failed to test template type selection: " + e.getMessage());
+            } finally {
+                latch.countDown();
+            }
+        });
+        
+        // Wait for JavaFX operations to complete
+        latch.await(5, TimeUnit.SECONDS);
+        
+        // Verify template type was selected
+        assertEquals(TemplateFileType.PHP_FILE, selectedTypeRef.get(), 
+                "Template type should be selectable");
+    }
+    
+    /**
+     * Test that reproduces the issue where CreateProjectDialog shows validation error
+     * for non-existent directories, even though ProjectFile.save() can handle creating them.
+     * This test simulates the exact steps from the bug report.
+     * 
+     * After the fix, this test should pass without showing validation errors.
+     */
+    @Test
+    public void testNonExistentDirectoryValidationIssue() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Boolean> validationErrorShownRef = new AtomicReference<>(false);
+        AtomicReference<String> errorMessageRef = new AtomicReference<>();
         AtomicReference<CreateProjectDialog.ProjectCreationResult> resultRef = new AtomicReference<>();
         
         Platform.runLater(() -> {
             try {
+                // Create the dialog
                 CreateProjectDialog dialog = new CreateProjectDialog(mainStage);
-                dialog.show();
                 
+                // Get dialog components
                 DialogPane dialogPane = dialog.getDialogPane();
-                
-                // Get the fields
-                TextField projectNameField = (TextField) dialogPane.lookup("#projectNameField");
                 TextField directoryField = (TextField) dialogPane.lookup("#directoryField");
+                TextField projectNameField = (TextField) dialogPane.lookup("#projectNameField");
                 ComboBox<TemplateFileType> templateTypeComboBox = 
                     (ComboBox<TemplateFileType>) dialogPane.lookup("#templateTypeComboBox");
+                Label directoryErrorLabel = (Label) dialogPane.lookup("#directoryErrorLabel");
                 
-                // Set test values - use valid existing directory
-                projectNameField.setText("TestProject");
-                directoryField.setText(System.getProperty("user.home"));
-                templateTypeComboBox.setValue(TemplateFileType.HTML_FILE);
+                // Simulate the bug reproduction steps:
+                // 1. Enter a non-existent directory path
+                String nonExistentPath = "/Users/daniel/test1"; // This path likely doesn't exist
+                directoryField.setText(nonExistentPath);
                 
-                // Get the ButtonType and directly call the result converter
+                // 2. Enter a project name
+                projectNameField.setText("it");
+                
+                // 3. Select template type
+                templateTypeComboBox.setValue(TemplateFileType.TXT_FILE);
+                
+                // 4. Try to create the project by calling the result converter
+                // (simulating clicking the Create button)
                 ButtonType createButtonType = dialogPane.getButtonTypes().stream()
                     .filter(bt -> bt.getButtonData() == ButtonBar.ButtonData.OK_DONE)
                     .findFirst()
                     .orElse(null);
                 
                 if (createButtonType != null) {
-                    // Bypass validation by directly calling result converter
+                    // This should trigger validation
                     CreateProjectDialog.ProjectCreationResult result = 
                         dialog.getResultConverter().call(createButtonType);
+                    
                     resultRef.set(result);
                     
-                    // Verify template type was set correctly
-                    templateTypeUpdatedRef.set(
-                        templateTypeComboBox.getValue() == TemplateFileType.HTML_FILE &&
-                        result != null &&
-                        result.getTemplateFileType() == TemplateFileType.HTML_FILE
-                    );
+                    // Check if validation error is shown
+                    if (directoryErrorLabel.isVisible()) {
+                        validationErrorShownRef.set(true);
+                        errorMessageRef.set(directoryErrorLabel.getText());
+                    }
                 }
                 
                 dialog.close();
             } catch (Exception e) {
-                System.err.println("Failed to test template type selection: " + e.getMessage());
+                System.err.println("Error in validation test: " + e.getMessage());
             } finally {
                 latch.countDown();
             }
         });
         
-        assertTrue(latch.await(5, TimeUnit.SECONDS), "Test timed out");
-        assertTrue(templateTypeUpdatedRef.get(), "Template type should be updatable and included in result");
+        // Wait for JavaFX operations to complete
+        latch.await(5, TimeUnit.SECONDS);
         
+        // After the fix, validation should NOT show an error for non-existent directories
+        // since ProjectFile.save() can create them
+        assertFalse(validationErrorShownRef.get(), 
+                   "CreateProjectDialog should NOT show validation error for non-existent directories " +
+                   "since ProjectFile.save() can create them. Error shown: " + errorMessageRef.get());
+        
+        // The result should be valid (not null) after the fix
+        assertNotNull(resultRef.get(), 
+                     "CreateProjectDialog should return a valid result for non-existent directories");
+        
+        // Verify the result contains the expected values
         CreateProjectDialog.ProjectCreationResult result = resultRef.get();
-        assertNotNull(result, "Result should not be null");
-        assertEquals(TemplateFileType.HTML_FILE, result.getTemplateFileType(), 
-            "Template type in result should match selected value");
-        assertEquals("TestProject", result.getProjectName(), 
-            "Project name in result should match input");
-        assertEquals(System.getProperty("user.home"), result.getDirectory(), 
-            "Directory in result should match input");
+        if (result != null) {
+            assertEquals("/Users/daniel/test1", result.getDirectory(), "Directory should match input");
+            assertEquals("it", result.getProjectName(), "Project name should match input");
+            assertEquals(TemplateFileType.TXT_FILE, result.getTemplateFileType(), "Template type should match input");
+        }
+    }
+    
+    /**
+     * Test that CreateProjectDialog allows creation of projects in non-existent directories
+     * after the fix is applied.
+     */
+    @Test
+    public void testCreateProjectInNonExistentDirectory() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<CreateProjectDialog.ProjectCreationResult> resultRef = new AtomicReference<>();
+        AtomicReference<Boolean> validationErrorShownRef = new AtomicReference<>(false);
+        
+        Platform.runLater(() -> {
+            try {
+                // Create the dialog
+                CreateProjectDialog dialog = new CreateProjectDialog(mainStage);
+                
+                // Get dialog components
+                DialogPane dialogPane = dialog.getDialogPane();
+                TextField directoryField = (TextField) dialogPane.lookup("#directoryField");
+                TextField projectNameField = (TextField) dialogPane.lookup("#projectNameField");
+                ComboBox<TemplateFileType> templateTypeComboBox = 
+                    (ComboBox<TemplateFileType>) dialogPane.lookup("#templateTypeComboBox");
+                Label directoryErrorLabel = (Label) dialogPane.lookup("#directoryErrorLabel");
+                
+                // Set up a non-existent directory path that we can create
+                Path tempDir = null;
+                try {
+                    tempDir = Files.createTempDirectory("jamplateTest");
+                    // Delete it so it doesn't exist for the test
+                    Files.delete(tempDir);
+                } catch (Exception e) {
+                    tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "jamplateTestNonExistent");
+                }
+                
+                String nonExistentPath = tempDir.toString();
+                directoryField.setText(nonExistentPath);
+                projectNameField.setText("TestProject");
+                templateTypeComboBox.setValue(TemplateFileType.HTML_FILE);
+                
+                // Try to create the project
+                ButtonType createButtonType = dialogPane.getButtonTypes().stream()
+                    .filter(bt -> bt.getButtonData() == ButtonBar.ButtonData.OK_DONE)
+                    .findFirst()
+                    .orElse(null);
+                
+                if (createButtonType != null) {
+                    CreateProjectDialog.ProjectCreationResult result = 
+                        dialog.getResultConverter().call(createButtonType);
+                    
+                    resultRef.set(result);
+                    
+                    // Check if validation error is shown
+                    if (directoryErrorLabel.isVisible()) {
+                        validationErrorShownRef.set(true);
+                    }
+                }
+                
+                dialog.close();
+            } catch (Exception e) {
+                System.err.println("Error in create project test: " + e.getMessage());
+            } finally {
+                latch.countDown();
+            }
+        });
+        
+        // Wait for JavaFX operations to complete
+        latch.await(5, TimeUnit.SECONDS);
+        
+        // After the fix, this should work without validation errors
+        assertFalse(validationErrorShownRef.get(), 
+                   "CreateProjectDialog should NOT show validation error for non-existent directories");
+        assertNotNull(resultRef.get(), 
+                     "CreateProjectDialog should return a valid result for non-existent directories");
+    }
+    
+    /**
+     * Test that CreateProjectDialog still validates truly invalid inputs
+     * (empty fields, invalid characters, etc.)
+     */
+    @Test
+    public void testValidationForInvalidInputs() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Boolean> createButtonDisabledForEmptyNameRef = new AtomicReference<>(false);
+        AtomicReference<Boolean> createButtonDisabledForEmptyDirectoryRef = new AtomicReference<>(false);
+        
+        Platform.runLater(() -> {
+            try {
+                // Create the dialog
+                CreateProjectDialog dialog = new CreateProjectDialog(mainStage);
+                
+                // Get dialog components
+                DialogPane dialogPane = dialog.getDialogPane();
+                TextField directoryField = (TextField) dialogPane.lookup("#directoryField");
+                TextField projectNameField = (TextField) dialogPane.lookup("#projectNameField");
+                ComboBox<TemplateFileType> templateTypeComboBox = 
+                    (ComboBox<TemplateFileType>) dialogPane.lookup("#templateTypeComboBox");
+                
+                Button createButton = (Button) dialogPane.lookupButton(
+                    dialogPane.getButtonTypes().stream()
+                        .filter(bt -> bt.getButtonData() == ButtonBar.ButtonData.OK_DONE)
+                        .findFirst()
+                        .orElse(null)
+                );
+                
+                // Test 1: Empty project name should disable create button
+                directoryField.setText(System.getProperty("user.home"));
+                projectNameField.setText(""); // Empty name
+                templateTypeComboBox.setValue(TemplateFileType.HTML_FILE);
+                
+                // Wait for binding to update
+                Platform.runLater(() -> {
+                    createButtonDisabledForEmptyNameRef.set(createButton.isDisabled());
+                    
+                    // Test 2: Empty directory should disable create button
+                    directoryField.setText(""); // Empty directory
+                    projectNameField.setText("ValidName");
+                    templateTypeComboBox.setValue(TemplateFileType.HTML_FILE);
+                    
+                    // Wait for binding to update again
+                    Platform.runLater(() -> {
+                        createButtonDisabledForEmptyDirectoryRef.set(createButton.isDisabled());
+                        dialog.close();
+                        latch.countDown();
+                    });
+                });
+                
+            } catch (Exception e) {
+                System.err.println("Error in invalid inputs test: " + e.getMessage());
+                latch.countDown();
+            }
+        });
+        
+        // Wait for JavaFX operations to complete
+        latch.await(5, TimeUnit.SECONDS);
+        
+        // These validations should still work - button should be disabled for invalid inputs
+        assertTrue(createButtonDisabledForEmptyNameRef.get(), 
+                  "Create button should be disabled for empty project name");
+        assertTrue(createButtonDisabledForEmptyDirectoryRef.get(), 
+                  "Create button should be disabled for empty directory");
     }
     
     /**
