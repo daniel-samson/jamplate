@@ -211,6 +211,10 @@ jobs:
 
 ## Support
 
+For help and documentation:
+- 📚 **User Guide**: [https://daniel-samson.github.io/jamplate-docs-forge/user-guide](https://daniel-samson.github.io/jamplate-docs-forge/user-guide)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/daniel-samson/jamplate/issues)
+
 For build issues or questions, check:
 1. Java version compatibility (requires 21+)
 2. Maven configuration and dependencies

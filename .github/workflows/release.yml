@@ -458,7 +458,8 @@ jobs:
         
         ## 🐛 Issues & Support
         
-        Report issues on [GitHub Issues](https://github.com/daniel-samson/jamplate/issues)
+        - 📚 **Documentation**: [User Guide](https://daniel-samson.github.io/jamplate-docs-forge/user-guide)
+        - 🐛 **Report Issues**: [GitHub Issues](https://github.com/daniel-samson/jamplate/issues)
         EOF
         
         echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT

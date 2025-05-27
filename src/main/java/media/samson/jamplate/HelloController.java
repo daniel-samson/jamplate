@@ -858,7 +858,7 @@ public class HelloController {
     
     @FXML
     private void handleHelp() {
-        String url = "https://jamplates.samson.media";
+        String url = "https://daniel-samson.github.io/jamplate-docs-forge/user-guide";
         try {
             java.awt.Desktop.getDesktop().browse(java.net.URI.create(url));
         } catch (Exception e) {
