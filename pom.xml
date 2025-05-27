@@ -281,15 +281,7 @@ We'll add it back when project opening functionality is working.
                     <winShortcut>true</winShortcut>
                     <winMenu>true</winMenu>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>jpackage</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jpackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <!-- Removed automatic execution to prevent build failure -->
             </plugin>
 
             <!-- Maven Assembly Plugin for creating distribution archives -->

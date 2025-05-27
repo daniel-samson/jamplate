@@ -91,10 +91,15 @@ jobs:
         
     - name: 📦 Create macOS native packages
       run: |
+        # Prepare jpackage input directory with all JARs
+        mkdir -p target/jpackage-input
+        cp target/jamplate-1.0-SNAPSHOT.jar target/jpackage-input/
+        cp target/dependencies/*.jar target/jpackage-input/
+        
         # Create app bundle
         jpackage \
-          --input target/dependencies \
-          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --input target/jpackage-input \
+          --main-jar jamplate-1.0-SNAPSHOT.jar \
           --main-class media.samson.jamplate.HelloApplication \
           --name Jamplate \
           --app-version 1.0.0 \
@@ -110,8 +115,8 @@ jobs:
           
         # Create DMG installer
         jpackage \
-          --input target/dependencies \
-          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --input target/jpackage-input \
+          --main-jar jamplate-1.0-SNAPSHOT.jar \
           --main-class media.samson.jamplate.HelloApplication \
           --name Jamplate \
           --app-version 1.0.0 \
@@ -164,10 +169,15 @@ jobs:
         
     - name: 📦 Create Windows native packages
       run: |
+        # Prepare jpackage input directory with all JARs
+        New-Item -ItemType Directory -Path "target/jpackage-input" -Force
+        Copy-Item "target/jamplate-1.0-SNAPSHOT.jar" "target/jpackage-input/"
+        Copy-Item "target/dependencies/*.jar" "target/jpackage-input/"
+        
         # Create app image
         jpackage `
-          --input target/dependencies `
-          --main-jar ../jamplate-1.0-SNAPSHOT.jar `
+          --input target/jpackage-input `
+          --main-jar jamplate-1.0-SNAPSHOT.jar `
           --main-class media.samson.jamplate.HelloApplication `
           --name Jamplate `
           --app-version 1.0.0 `
@@ -182,8 +192,8 @@ jobs:
           
         # Create MSI installer
         jpackage `
-          --input target/dependencies `
-          --main-jar ../jamplate-1.0-SNAPSHOT.jar `
+          --input target/jpackage-input `
+          --main-jar jamplate-1.0-SNAPSHOT.jar `
           --main-class media.samson.jamplate.HelloApplication `
           --name Jamplate `
           --app-version 1.0.0 `
@@ -239,10 +249,15 @@ jobs:
         
     - name: 📦 Create Linux native packages
       run: |
+        # Prepare jpackage input directory with all JARs
+        mkdir -p target/jpackage-input
+        cp target/jamplate-1.0-SNAPSHOT.jar target/jpackage-input/
+        cp target/dependencies/*.jar target/jpackage-input/
+        
         # Create app image
         jpackage \
-          --input target/dependencies \
-          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --input target/jpackage-input \
+          --main-jar jamplate-1.0-SNAPSHOT.jar \
           --main-class media.samson.jamplate.HelloApplication \
           --name jamplate \
           --app-version 1.0.0 \
@@ -257,8 +272,8 @@ jobs:
           
         # Create DEB package
         jpackage \
-          --input target/dependencies \
-          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --input target/jpackage-input \
+          --main-jar jamplate-1.0-SNAPSHOT.jar \
           --main-class media.samson.jamplate.HelloApplication \
           --name jamplate \
           --app-version 1.0.0 \

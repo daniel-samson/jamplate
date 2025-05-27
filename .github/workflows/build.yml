@@ -87,10 +87,15 @@ jobs:
         
     - name: 🧪 Test jpackage creation (app-image only)
       run: |
+        # Prepare jpackage input directory with all JARs
+        mkdir -p target/jpackage-input
+        cp target/jamplate-1.0-SNAPSHOT.jar target/jpackage-input/
+        cp target/dependencies/*.jar target/jpackage-input/
+        
         # Test creating just an app image (faster than full DMG)
         jpackage \
-          --input target/dependencies \
-          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --input target/jpackage-input \
+          --main-jar jamplate-1.0-SNAPSHOT.jar \
           --main-class media.samson.jamplate.HelloApplication \
           --name Jamplate-Test \
           --app-version 1.0.0 \
