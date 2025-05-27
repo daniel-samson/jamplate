@@ -15,6 +15,11 @@
             <items>
               <MenuItem fx:id="menuNew" text="_New" accelerator="shortcut+N" onAction="#handleNew" />
               <MenuItem fx:id="menuOpen" text="_Open..." accelerator="shortcut+O" onAction="#handleOpen" />
+              <Menu fx:id="menuRecentProjects" text="_Recent Projects">
+                <items>
+                  <MenuItem text="No recent projects" disable="true" />
+                </items>
+              </Menu>
               <MenuItem fx:id="menuSave" text="_Save" accelerator="shortcut+S" />
               <SeparatorMenuItem />
               <MenuItem fx:id="menuImportCSV" text="Import _Variables from CSV..." onAction="#handleImportCSV" />

@@ -14,15 +14,15 @@ import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -77,6 +77,7 @@ public class HelloController {
     
     @FXML private MenuItem menuNew;
     @FXML private MenuItem menuOpen;
+    @FXML private Menu menuRecentProjects;
     @FXML private MenuItem menuImportCSV;
     @FXML private MenuItem menuSave;
     @FXML private MenuItem menuCut;
@@ -96,6 +97,9 @@ public class HelloController {
     @FXML private WebView previewWebView;
     
     private final ObservableList<Variable> variables = FXCollections.observableArrayList();
+    
+    // Recent projects manager
+    private RecentProjectsManager recentProjectsManager;
     
     // Context menu for autocomplete
     private ContextMenu autocompleteMenu;
@@ -301,6 +305,12 @@ public class HelloController {
                 Platform.runLater(this::updatePreview);
             }
         });
+        
+        // Initialize recent projects manager
+        recentProjectsManager = new RecentProjectsManager();
+        
+        // Update recent projects menu
+        updateRecentProjectsMenu();
     }
     
     /**
@@ -1260,6 +1270,12 @@ public class HelloController {
             if (btnOpen.getScene() != null && btnOpen.getScene().getWindow() instanceof Stage) {
                 ((Stage) btnOpen.getScene().getWindow()).setTitle("Jamplate - " + projectFile.getProjectName());
             }
+            
+            // Add to recent projects
+            if (recentProjectsManager != null) {
+                recentProjectsManager.addRecentProject(directory, projectFile.getProjectName());
+                updateRecentProjectsMenu();
+            }
         } else {
             // Show error dialog
             showErrorDialog(
@@ -1358,6 +1374,12 @@ public class HelloController {
                 // Update UI to reflect the new project
                 updateUIForProject();
                 System.out.println("Project file created successfully at: " + projectFilePath);
+                
+                // Add to recent projects
+                if (recentProjectsManager != null) {
+                    recentProjectsManager.addRecentProject(directory, projectName);
+                    updateRecentProjectsMenu();
+                }
             } else {
                 // Show error dialog for file opening failure
                 showErrorDialog(
@@ -1851,8 +1873,104 @@ public class HelloController {
     }
 
     private void updatePreviewIfVisible() {
-        if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Preview")) {
+        if (mainTabPane.getSelectionModel().getSelectedItem() != null &&
+            "Preview".equals(mainTabPane.getSelectionModel().getSelectedItem().getText())) {
             updatePreview();
+        }
+    }
+    
+    /**
+     * Updates the Recent Projects menu with the current list of recent projects.
+     */
+    private void updateRecentProjectsMenu() {
+        if (menuRecentProjects == null || recentProjectsManager == null) {
+            return;
+        }
+        
+        // Clear existing items
+        menuRecentProjects.getItems().clear();
+        
+        // Get recent projects
+        List<RecentProjectsManager.RecentProject> recentProjects = recentProjectsManager.getRecentProjects();
+        
+        if (recentProjects.isEmpty()) {
+            // Show "No recent projects" message
+            MenuItem noProjectsItem = new MenuItem("No recent projects");
+            noProjectsItem.setDisable(true);
+            menuRecentProjects.getItems().add(noProjectsItem);
+        } else {
+            // Add recent projects
+            for (RecentProjectsManager.RecentProject recentProject : recentProjects) {
+                MenuItem projectItem = new MenuItem(recentProject.getDisplayName());
+                
+                // Set tooltip with full path
+                projectItem.setUserData(recentProject);
+                Tooltip tooltip = new Tooltip(recentProject.getProjectDirectory());
+                Tooltip.install(projectItem.getGraphic(), tooltip);
+                
+                // Add action to open the project
+                projectItem.setOnAction(event -> {
+                    openRecentProject(recentProject);
+                });
+                
+                menuRecentProjects.getItems().add(projectItem);
+            }
+            
+            // Add separator and "Clear Recent Projects" option
+            if (!recentProjects.isEmpty()) {
+                menuRecentProjects.getItems().add(new SeparatorMenuItem());
+                
+                MenuItem clearItem = new MenuItem("Clear Recent Projects");
+                clearItem.setOnAction(event -> {
+                    recentProjectsManager.clearRecentProjects();
+                    updateRecentProjectsMenu();
+                });
+                menuRecentProjects.getItems().add(clearItem);
+            }
+        }
+    }
+    
+    /**
+     * Opens a recent project.
+     * 
+     * @param recentProject The recent project to open
+     */
+    private void openRecentProject(RecentProjectsManager.RecentProject recentProject) {
+        if (recentProject == null) {
+            return;
+        }
+        
+        try {
+            // Use the existing loadProjectFromDirectory method
+            String projectDirectory = recentProject.getProjectDirectory();
+            
+            if (projectExistsInDirectory(projectDirectory)) {
+                loadProjectFromDirectory(projectDirectory);
+                
+                // Update the recent projects list (move to top)
+                recentProjectsManager.addRecentProject(
+                    recentProject.projectFilePath, 
+                    recentProject.projectName
+                );
+                updateRecentProjectsMenu();
+            } else {
+                // Project no longer exists, remove from recent list
+                recentProjectsManager.removeRecentProject(recentProject.projectFilePath);
+                updateRecentProjectsMenu();
+                
+                showErrorDialog(
+                    "Project Not Found",
+                    "Recent Project Missing",
+                    "The project '" + recentProject.getDisplayName() + "' could not be found at:\n" +
+                    projectDirectory + "\n\nIt has been removed from the recent projects list."
+                );
+            }
+        } catch (Exception e) {
+            showErrorDialog(
+                "Error Opening Project",
+                "Failed to Open Recent Project",
+                "An error occurred while opening the project: " + e.getMessage()
+            );
         }
     }
 }
