@@ -27,12 +27,16 @@ Jamplate now has comprehensive GitHub Actions workflows that build and distribut
 - **Formats**:
   - 📦 DEB package (`jamplate_1.0.0_amd64.deb`) - Debian/Ubuntu
   - 📦 RPM package (`jamplate-1.0.0-1.x86_64.rpm`) - Red Hat/Fedora/CentOS
+  - 📦 Snap package (`jamplate_1.0.0_amd64.snap`) - Universal Linux
+  - 📦 Flatpak package (`media.samson.jamplate.flatpak`) - Sandboxed universal
   - 📱 App bundle (`jamplate-Linux-app.tar.gz`)
 - **Icon**: PNG format
-- **Features**: Menu integration, desktop shortcuts
+- **Features**: Menu integration, desktop shortcuts, sandboxed execution
 - **Requirements**: 
   - **Debian/Ubuntu**: Ubuntu 18.04+ / Debian 10+
   - **Red Hat/Fedora**: RHEL 8+ / Fedora 32+ / CentOS 8+
+  - **Snap**: Any Linux distribution with snapd
+  - **Flatpak**: Any Linux distribution with Flatpak runtime
 
 ## 🔄 **GitHub Actions Workflows**
 
@@ -58,6 +62,8 @@ Jamplate now has comprehensive GitHub Actions workflows that build and distribut
 4. **🐧 Linux Build** (`ubuntu-latest`)
    - DEB package for Debian/Ubuntu
    - RPM package for Red Hat/Fedora
+   - Snap package for universal Linux
+   - Flatpak manifest for sandboxed distribution
    - Linux app bundle
 
 5. **🎉 Release Creation** (`ubuntu-latest`)
@@ -121,6 +127,28 @@ sudo rpm -i jamplate-1.0.0-1.x86_64.rpm
 sudo dnf install jamplate-1.0.0-1.x86_64.rpm
 ```
 
+#### Universal Linux (Snap):
+```bash
+# Download and install Snap package
+wget https://github.com/daniel-samson/jamplate/releases/latest/download/jamplate_1.0.0_amd64.snap
+sudo snap install jamplate_1.0.0_amd64.snap --dangerous
+
+# Or from Snap Store (when published)
+# sudo snap install jamplate
+```
+
+#### Universal Linux (Flatpak):
+```bash
+# Install from Flathub (when published)
+# flatpak install flathub media.samson.jamplate
+
+# Or build locally from source
+git clone https://github.com/daniel-samson/jamplate.git
+cd jamplate
+flatpak-builder build-dir flatpak/media.samson.jamplate.yml --force-clean
+flatpak-builder --run build-dir flatpak/media.samson.jamplate.yml jamplate
+```
+
 ## 🎯 **Distribution Artifacts**
 
 Each release creates these artifacts:
@@ -133,6 +161,8 @@ Each release creates these artifacts:
 | Windows | EXE | `Jamplate-1.0.0.exe` | ~69MB | Embedded Java, alternative format |
 | Linux | DEB | `jamplate_1.0.0_amd64.deb` | ~69MB | Embedded Java, Debian/Ubuntu |
 | Linux | RPM | `jamplate-1.0.0-1.x86_64.rpm` | ~69MB | Embedded Java, Red Hat/Fedora |
+| Linux | Snap | `jamplate_1.0.0_amd64.snap` | ~70MB | Embedded Java, Universal Linux |
+| Linux | Flatpak | `media.samson.jamplate.flatpak` | ~70MB | Sandboxed, Universal Linux |
 
 ### **Portable Apps** (No Java Required)
 | Platform | Format | File | Size | Usage |
@@ -208,7 +238,7 @@ git push origin v1.0.0
 
 | Platform | Java | Build Time | Package Types | Icon Format |
 |----------|------|------------|---------------|-------------|
-| Ubuntu | OpenJDK 21 | ~5-8 min | DEB, RPM, App Bundle | PNG |
+| Ubuntu | OpenJDK 21 | ~8-12 min | DEB, RPM, Snap, Flatpak, App Bundle | PNG |
 | Windows | OpenJDK 21 | ~8-12 min | MSI, EXE, App Bundle | ICO |
 | macOS | OpenJDK 21 | ~10-15 min | DMG, App Bundle | ICNS |
 

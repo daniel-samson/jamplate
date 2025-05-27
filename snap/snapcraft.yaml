@@ -1,0 +1,57 @@
+name: jamplate
+base: core22
+version: '1.0.0'
+summary: Professional template management tool
+description: |
+  Jamplate is a professional template management application that allows you to 
+  create, edit, and manage templates with variables and rich text formatting.
+  Features include CSV import, project management, and content generation.
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+
+apps:
+  jamplate:
+    command: bin/jamplate
+    desktop: share/applications/jamplate.desktop
+    plugs:
+      - home
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - opengl
+      - audio-playback
+      - network
+      - removable-media
+
+parts:
+  jamplate:
+    plugin: dump
+    source: target/jpackage-input
+    organize:
+      jamplate-1.0-SNAPSHOT.jar: lib/jamplate-1.0-SNAPSHOT.jar
+      "*.jar": lib/
+    stage:
+      - lib/*
+  
+  launcher:
+    plugin: dump
+    source: scripts/
+    organize:
+      jamplate-snap.sh: bin/jamplate
+    stage:
+      - bin/jamplate
+      
+  desktop:
+    plugin: dump
+    source: .
+    organize:
+      jamplate.desktop: share/applications/jamplate.desktop
+      "src/main/resources/icons/app-icon.png": share/icons/hicolor/256x256/apps/jamplate.png
+    stage:
+      - share/applications/jamplate.desktop
+      - share/icons/hicolor/256x256/apps/jamplate.png 

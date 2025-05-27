@@ -1,0 +1,38 @@
+app-id: media.samson.jamplate
+runtime: org.freedesktop.Platform
+runtime-version: '22.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.openjdk21
+command: jamplate
+
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=home
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-desktop
+  - --env=JAVA_HOME=/app/jre
+
+modules:
+  - name: openjdk
+    buildsystem: simple
+    build-commands:
+      - /usr/lib/sdk/openjdk21/installjdk.sh
+
+  - name: jamplate
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/bin /app/lib /app/share/applications /app/share/icons/hicolor/256x256/apps
+      - cp target/jpackage-input/jamplate-1.0-SNAPSHOT.jar /app/lib/
+      - cp target/jpackage-input/*.jar /app/lib/ || true
+      - cp scripts/jamplate.sh /app/bin/jamplate
+      - chmod +x /app/bin/jamplate
+      - cp jamplate.desktop /app/share/applications/media.samson.jamplate.desktop
+      - cp src/main/resources/icons/app-icon.png /app/share/icons/hicolor/256x256/apps/media.samson.jamplate.png
+    sources:
+      - type: dir
+        path: . 

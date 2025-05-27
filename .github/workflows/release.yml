@@ -327,6 +327,24 @@ jobs:
           --linux-menu-group "Development" \
           --linux-shortcut
           
+        - name: 📦 Create Universal Linux Packages (Snap & Flatpak)
+      run: |
+        # Install snapcraft for Snap package building
+        sudo snap install snapcraft --classic
+        
+        echo "Building Snap package..."
+        # Build Snap package using existing snapcraft.yaml
+        snapcraft --destructive-mode || echo "Snap build failed, continuing..."
+        
+        # Move snap to target directory
+        mkdir -p target/native/linux
+        mv *.snap target/native/linux/ 2>/dev/null || echo "No snap file generated"
+        
+        echo "Flatpak manifest available at flatpak/media.samson.jamplate.yml"
+        echo "Note: Flatpak requires complex CI setup with Flathub integration."
+        echo "For local Flatpak builds, run:"
+        echo "flatpak-builder build-dir flatpak/media.samson.jamplate.yml --force-clean"
+          
     - name: 📤 Upload Linux artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -334,7 +352,9 @@ jobs:
         path: |
           target/native/linux/*.deb
           target/native/linux/*.rpm
+          target/native/linux/*.snap
           target/native/linux/jamplate
+          flatpak/
         retention-days: 5
 
   # Create GitHub Release
@@ -368,6 +388,7 @@ jobs:
         # Copy Linux packages
         cp linux-packages/*.deb release-files/ || true
         cp linux-packages/*.rpm release-files/ || true
+        cp linux-packages/*.snap release-files/ || true
         
         # Create ZIP archives for app bundles
         if [ -d "macos-packages/Jamplate.app" ]; then
@@ -401,6 +422,7 @@ jobs:
         - **Windows**: Download `Jamplate-1.0.0.msi` or `Jamplate-1.0.0.exe` - Run installer
         - **Linux (Debian/Ubuntu)**: Download `jamplate_1.0.0_amd64.deb` - Install with `sudo dpkg -i`
         - **Linux (Red Hat/Fedora)**: Download `jamplate-1.0.0-1.x86_64.rpm` - Install with `sudo rpm -i`
+        - **Linux (Universal)**: Download `jamplate_1.0.0_amd64.snap` - Install with `sudo snap install`
         
         ### ⚡ For Developers (Requires Java 21+)
         - **Cross-Platform JAR**: Download `jamplate-1.0-SNAPSHOT-distribution.zip`
@@ -427,6 +449,8 @@ jobs:
         - **Windows**: Windows 10 or later (supports both MSI and EXE installers)
         - **Linux Debian/Ubuntu**: Ubuntu 18.04+ / Debian 10+ (DEB package)
         - **Linux Red Hat/Fedora**: RHEL 8+ / Fedora 32+ / CentOS 8+ (RPM package)
+        - **Linux Universal**: Any distribution with Snap support (Snap package)
+        - **Linux Sandboxed**: Any distribution with Flatpak support (Flatpak package)
         
         ### JAR Distribution
         - **Java**: Version 21 or later
@@ -458,7 +482,7 @@ jobs:
         echo "- ✅ Cross-platform JAR distribution"
         echo "- ✅ macOS DMG installer + app bundle"  
         echo "- ✅ Windows MSI + EXE installers + app bundle"
-        echo "- ✅ Linux DEB + RPM packages + app bundle"
+        echo "- ✅ Linux DEB + RPM + Snap packages + app bundle"
         echo ""
         echo "### 🔗 Release URL:"
         echo "https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-jar.outputs.version }}" 

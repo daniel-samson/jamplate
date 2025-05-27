@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Jamplate
+Comment=Professional Template Management Tool
+Exec=jamplate
+Icon=jamplate
+Categories=Development;Office;TextEditor;
+Keywords=template;editor;development;management;variables;
+StartupNotify=true
+StartupWMClass=Jamplate
+MimeType=text/plain;application/xml; 
