@@ -1397,7 +1397,11 @@ public class HelloController {
             showErrorDialog(
                 "Error Creating Project", 
                 "Project Creation Failed", 
-                "Failed to create the project file. Please check if you have write permissions to the specified location."
+                "Failed to create the project file. This may be due to:\n" +
+                "• The specified directory path does not exist and could not be created\n" +
+                "• Insufficient write permissions to the specified location\n" +
+                "• Invalid characters in the project name or path\n\n" +
+                "Please check the console output for more detailed error information."
             );
             System.err.println("Failed to create project file.");
         }

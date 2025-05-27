@@ -464,4 +464,43 @@ public class ProjectFileTest {
         assertTrue(templateContent.contains("{{$JamplateDocumentCreateAt}}"), 
                 "Template should contain the unmodified {{$JamplateDocumentCreateAt}} variable");
     }
+    
+    @Test
+    @DisplayName("Test creating project when parent directory doesn't exist")
+    void testCreateProjectWithNonExistentParentDirectory(@TempDir Path tempDir) {
+        // Create a path with multiple non-existent parent directories
+        Path nonExistentParent = tempDir.resolve("level1").resolve("level2").resolve("level3");
+        String projectName = "TestProject";
+        
+        // Verify the parent directory doesn't exist
+        assertFalse(Files.exists(nonExistentParent), "Parent directory should not exist initially");
+        
+        // Create a project in the non-existent directory
+        ProjectFile project = new ProjectFile(projectName, nonExistentParent.toString(), TemplateFileType.HTML_FILE);
+        
+        // Save the project - this should create all necessary parent directories
+        boolean saveResult = project.save();
+        
+        // Verify the save was successful
+        assertTrue(saveResult, "Project should save successfully even when parent directories don't exist");
+        
+        // Verify the parent directories were created
+        assertTrue(Files.exists(nonExistentParent), "Parent directory should be created");
+        
+        // Verify the project directory was created
+        Path projectDir = nonExistentParent.resolve(projectName);
+        assertTrue(Files.exists(projectDir), "Project directory should be created");
+        
+        // Verify the project file was created
+        Path projectFile = projectDir.resolve("project.xml");
+        assertTrue(Files.exists(projectFile), "Project file should be created");
+        
+        // Verify the template file was created
+        Path templateFile = projectDir.resolve("template.html");
+        assertTrue(Files.exists(templateFile), "Template file should be created");
+        
+        // Verify the variables file was created
+        Path variablesFile = projectDir.resolve("variables.xml");
+        assertTrue(Files.exists(variablesFile), "Variables file should be created");
+    }
 }
