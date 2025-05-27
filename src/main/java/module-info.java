@@ -12,6 +12,9 @@ module media.samson.jamplate {
     requires jakarta.xml.bind;
     requires org.apache.commons.csv;
     
+    // Desktop integration for Help menu
+    requires java.desktop;
+    
     // Export the main package
     exports media.samson.jamplate;
     

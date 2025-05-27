@@ -3,9 +3,11 @@ package media.samson.jamplate;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 public class HelloApplication extends Application {
     @Override
@@ -13,6 +15,33 @@ public class HelloApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
         stage.setTitle("Jamplate");
+        
+        // Set application icon
+        try {
+            InputStream iconStream = HelloApplication.class.getResourceAsStream("/icons/app-icon.png");
+            if (iconStream != null) {
+                Image icon = new Image(iconStream);
+                stage.getIcons().add(icon);
+                
+                // Add multiple sizes for better scaling
+                InputStream icon16Stream = HelloApplication.class.getResourceAsStream("/icons/app-icon-16.png");
+                InputStream icon32Stream = HelloApplication.class.getResourceAsStream("/icons/app-icon-32.png");
+                InputStream icon64Stream = HelloApplication.class.getResourceAsStream("/icons/app-icon-64.png");
+                InputStream icon128Stream = HelloApplication.class.getResourceAsStream("/icons/app-icon-128.png");
+                InputStream icon256Stream = HelloApplication.class.getResourceAsStream("/icons/app-icon-256.png");
+                InputStream icon512Stream = HelloApplication.class.getResourceAsStream("/icons/app-icon-512.png");
+                
+                if (icon16Stream != null) stage.getIcons().add(new Image(icon16Stream));
+                if (icon32Stream != null) stage.getIcons().add(new Image(icon32Stream));
+                if (icon64Stream != null) stage.getIcons().add(new Image(icon64Stream));
+                if (icon128Stream != null) stage.getIcons().add(new Image(icon128Stream));
+                if (icon256Stream != null) stage.getIcons().add(new Image(icon256Stream));
+                if (icon512Stream != null) stage.getIcons().add(new Image(icon512Stream));
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not load application icon: " + e.getMessage());
+        }
+        
         stage.setScene(scene);
         stage.show();
     }

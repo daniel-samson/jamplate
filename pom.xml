@@ -136,8 +136,7 @@ We'll add it back when project opening functionality is working.
                     <execution>
                         <id>default-compile</id>
                         <configuration>
-                            <source>21</source>
-                            <target>21</target>
+                            <release>21</release>
                             <compilerArgs>
                                 <arg>--add-reads</arg>
                                 <arg>media.samson.jamplate=ALL-UNNAMED</arg>
@@ -148,12 +147,11 @@ We'll add it back when project opening functionality is working.
                     <execution>
                         <id>default-testCompile</id>
                         <configuration>
-                            <source>21</source>
-                            <target>21</target>
-                            <testCompilerArgs>
+                            <release>21</release>
+                            <compilerArgs>
                                 <arg>--add-reads</arg>
                                 <arg>media.samson.jamplate=ALL-UNNAMED</arg>
-                            </testCompilerArgs>
+                            </compilerArgs>
                         </configuration>
                     </execution>
                 </executions>
@@ -182,8 +180,8 @@ We'll add it back when project opening functionality is working.
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <!-- Specify the module-prefixed main class -->
-                    <mainClass>media.samson.jamplate/media.samson.jamplate.HelloApplication</mainClass>
+                    <!-- Use simple main class for JavaFX plugin -->
+                    <mainClass>media.samson.jamplate.HelloApplication</mainClass>
                     <options>
                         <!-- Add all necessary exports -->
                         <option>--add-exports</option>
@@ -196,10 +194,23 @@ We'll add it back when project opening functionality is working.
                         <option>org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED</option>
                         <option>--add-reads</option>
                         <option>media.samson.jamplate=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.controls/javafx.scene.control=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.base/javafx.collections=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.base/javafx.beans=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
                     </options>
-                    <!-- Add module path configuration -->
-                    <modulePathPrefix>target/dependencies</modulePathPrefix>
-                    <includePathExceptionsInClasspath>true</includePathExceptionsInClasspath>
                 </configuration>
             </plugin>
             <!-- Add exec-maven-plugin as an alternative run method -->
@@ -213,6 +224,115 @@ We'll add it back when project opening functionality is working.
                         <!-- Add VM arguments if needed -->
                     </arguments>
                     <classpathScope>runtime</classpathScope>
+                </configuration>
+            </plugin>
+            
+            <!-- JPackage Plugin for creating native executables -->
+            <plugin>
+                <groupId>org.panteleyev</groupId>
+                <artifactId>jpackage-maven-plugin</artifactId>
+                <version>1.6.5</version>
+                <configuration>
+                    <name>Jamplate</name>
+                    <appVersion>1.0.0</appVersion>
+                    <vendor>Samson Media</vendor>
+                    <destination>target/dist</destination>
+                    <module>media.samson.jamplate/media.samson.jamplate.HelloApplication</module>
+                    <modulePaths>
+                        <modulePath>target/classes</modulePath>
+                        <modulePath>target/dependencies</modulePath>
+                    </modulePaths>
+                    <icon>src/main/resources/icons/app-icon.png</icon>
+                    <javaOptions>
+                        <option>--add-exports</option>
+                        <option>javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
+                        <option>javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
+                        <option>org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
+                        <option>org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED</option>
+                        <option>--add-reads</option>
+                        <option>media.samson.jamplate=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.controls/javafx.scene.control=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.base/javafx.collections=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.base/javafx.beans=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
+                    </javaOptions>
+                    <linuxPackageName>jamplate</linuxPackageName>
+                    <linuxMenuGroup>Development</linuxMenuGroup>
+                    <macPackageIdentifier>media.samson.jamplate</macPackageIdentifier>
+                    <macPackageName>Jamplate</macPackageName>
+                    <winDirChooser>true</winDirChooser>
+                    <winMenuGroup>Development Tools</winMenuGroup>
+                    <winPerUserInstall>false</winPerUserInstall>
+                    <winShortcut>true</winShortcut>
+                    <winMenu>true</winMenu>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jpackage</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jpackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Assembly Plugin for creating distribution archives -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/distribution.xml</descriptor>
+                    </descriptors>
+                    <finalName>jamplate-${project.version}</finalName>
+                    <appendAssemblyId>true</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven JAR Plugin for creating executable JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>libs/</classpathPrefix>
+                            <mainClass>media.samson.jamplate.HelloApplication</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Implementation-Title>Jamplate</Implementation-Title>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Vendor>Samson Media</Implementation-Vendor>
+                        </manifestEntries>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
