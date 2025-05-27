@@ -120,6 +120,9 @@ We'll add it back when project opening functionality is working.
                     <argLine>
                         --add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED
                         --add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED
+                        --add-exports javafx.graphics/com.sun.javafx.sg.prism=ALL-UNNAMED
+                        --add-exports javafx.web/com.sun.javafx.sg.prism.web=ALL-UNNAMED
+                        --add-exports javafx.web/com.sun.webkit=ALL-UNNAMED
                         --add-exports org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED
                         --add-exports org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED
                         --add-exports javafx.controls/javafx.scene.control=ALL-UNNAMED
@@ -131,6 +134,9 @@ We'll add it back when project opening functionality is working.
                         --add-opens javafx.controls/javafx.scene.control=ALL-UNNAMED
                         --add-opens javafx.base/javafx.collections=ALL-UNNAMED
                         --add-opens javafx.base/javafx.beans=ALL-UNNAMED
+                        --add-opens javafx.graphics/com.sun.javafx.sg.prism=ALL-UNNAMED
+                        --add-opens javafx.web/com.sun.javafx.sg.prism.web=ALL-UNNAMED
+                        --add-opens javafx.web/com.sun.webkit=ALL-UNNAMED
                         --add-opens org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED
                         --add-opens org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED
                         --add-opens javafx.graphics/com.sun.glass.ui=ALL-UNNAMED
@@ -201,6 +207,12 @@ We'll add it back when project opening functionality is working.
                         <option>--add-exports</option>
                         <option>javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
                         <option>--add-exports</option>
+                        <option>javafx.graphics/com.sun.javafx.sg.prism=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
+                        <option>javafx.web/com.sun.javafx.sg.prism.web=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
+                        <option>javafx.web/com.sun.webkit=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
                         <option>org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED</option>
                         <option>--add-exports</option>
                         <option>org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED</option>
@@ -214,6 +226,12 @@ We'll add it back when project opening functionality is working.
                         <option>javafx.base/javafx.collections=ALL-UNNAMED</option>
                         <option>--add-opens</option>
                         <option>javafx.base/javafx.beans=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.graphics/com.sun.javafx.sg.prism=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.web/com.sun.javafx.sg.prism.web=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.web/com.sun.webkit=ALL-UNNAMED</option>
                         <option>--add-opens</option>
                         <option>org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED</option>
                         <option>--add-opens</option>
@@ -261,6 +279,12 @@ We'll add it back when project opening functionality is working.
                         <option>--add-exports</option>
                         <option>javafx.graphics/com.sun.glass.ui=ALL-UNNAMED</option>
                         <option>--add-exports</option>
+                        <option>javafx.graphics/com.sun.javafx.sg.prism=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
+                        <option>javafx.web/com.sun.javafx.sg.prism.web=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
+                        <option>javafx.web/com.sun.webkit=ALL-UNNAMED</option>
+                        <option>--add-exports</option>
                         <option>org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED</option>
                         <option>--add-exports</option>
                         <option>org.fxmisc.richtext/org.fxmisc.richtext.model=ALL-UNNAMED</option>
@@ -274,6 +298,12 @@ We'll add it back when project opening functionality is working.
                         <option>javafx.base/javafx.collections=ALL-UNNAMED</option>
                         <option>--add-opens</option>
                         <option>javafx.base/javafx.beans=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.graphics/com.sun.javafx.sg.prism=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.web/com.sun.javafx.sg.prism.web=ALL-UNNAMED</option>
+                        <option>--add-opens</option>
+                        <option>javafx.web/com.sun.webkit=ALL-UNNAMED</option>
                         <option>--add-opens</option>
                         <option>org.fxmisc.richtext/org.fxmisc.richtext=ALL-UNNAMED</option>
                         <option>--add-opens</option>
