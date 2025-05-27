@@ -26,6 +26,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -92,6 +93,7 @@ public class HelloController {
     @FXML private TabPane mainTabPane;
     @FXML private ListView<Variable> variableList;
     @FXML private CodeArea templateEditor;
+    @FXML private WebView previewWebView;
     
     private final ObservableList<Variable> variables = FXCollections.observableArrayList();
     
@@ -247,9 +249,15 @@ public class HelloController {
         mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab != null) {
                 boolean isVariablesTab = "Variables".equals(newTab.getText());
+                boolean isPreviewTab = "Preview".equals(newTab.getText());
                 addButton.setDisable(!isVariablesTab);
                 removeButton.setDisable(!isVariablesTab);
                 updateEditButtonStates(isVariablesTab);
+                
+                // Update preview when Preview tab is selected
+                if (isPreviewTab) {
+                    updatePreview();
+                }
             }
         });
         
@@ -283,6 +291,16 @@ public class HelloController {
         // Connect the Save menu item and toolbar button to the handleSave method
         btnSave.setOnAction(event -> handleSave());
         menuSave.setOnAction(event -> handleSave());
+        
+        // Add listener for template content changes to update preview
+        templateEditor.textProperty().addListener((observable, oldValue, newValue) -> {
+            // Update preview if Preview tab is visible
+            if (mainTabPane.getSelectionModel().getSelectedItem() != null &&
+                "Preview".equals(mainTabPane.getSelectionModel().getSelectedItem().getText())) {
+                // Use Platform.runLater to avoid updating too frequently during typing
+                Platform.runLater(this::updatePreview);
+            }
+        });
     }
     
     /**
@@ -585,6 +603,7 @@ public class HelloController {
             variables.add(variable);
             variableList.getSelectionModel().select(variable);
             updateEditButtonStates(true);
+            updatePreviewIfVisible();
         });
     }
 
@@ -618,6 +637,7 @@ public class HelloController {
                 if (response == ButtonType.YES) {
                     variables.removeAll(selectedItems);
                     updateEditButtonStates(true);
+                    updatePreviewIfVisible();
                 }
             });
         }
@@ -642,6 +662,7 @@ public class HelloController {
                 // Maintain selection
                 variableList.getSelectionModel().select(index);
                 updateEditButtonStates(true);
+                updatePreviewIfVisible();
             });
         }
     }
@@ -1488,6 +1509,13 @@ public class HelloController {
                 ((Stage) window).setTitle("Jamplate - " + projectFile.getProjectName());
             }
         }
+        
+        // Update preview if we have a project and the Preview tab is selected
+        if (hasProject && mainTabPane != null && 
+            mainTabPane.getSelectionModel().getSelectedItem() != null &&
+            "Preview".equals(mainTabPane.getSelectionModel().getSelectedItem().getText())) {
+            updatePreview();
+        }
     }
     
     /**
@@ -1769,5 +1797,62 @@ public class HelloController {
         return !voidElements.contains(lowerTagName) && 
                !specialElements.contains(lowerTagName) &&
                !lowerTagName.startsWith("!");
+    }
+    
+    /**
+     * Updates the preview by generating HTML from the template and variables,
+     * then displaying it in the WebView.
+     */
+    private void updatePreview() {
+        if (projectFile == null || templateEditor.getText().isEmpty()) {
+            // Clear the preview if no project or template
+            previewWebView.getEngine().loadContent("<html><body><h2>No template to preview</h2><p>Please create a project and add template content.</p></body></html>");
+            return;
+        }
+        
+        try {
+            // Get the template content
+            String templateContent = templateEditor.getText();
+            
+            // Build variables map from the current variables list
+            HashMap<String, String> variablesMap = new HashMap<>();
+            
+            // Add user-defined variables
+            for (Variable variable : variables) {
+                variablesMap.put(variable.getName(), variable.getValue());
+            }
+            
+            // Add special Jamplate variables
+            variablesMap.put("JamplateProjectName", projectFile.getProjectName());
+            variablesMap.put("JamplateDocumentCreateAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            
+            // Use MyTemplateEngine to process the template
+            MyTemplateEngine templateEngine = new MyTemplateEngine();
+            templateEngine.setTemplate(templateContent);
+            String processedContent = templateEngine.build(variablesMap);
+            
+            // Create preview.html file in the project directory
+            Path projectDir = Paths.get(projectFile.getProjectDirectoryPath());
+            Path previewFile = projectDir.resolve("preview.html");
+            
+            // Write the processed content to preview.html
+            Files.write(previewFile, processedContent.getBytes());
+            
+            // Load the preview file in the WebView
+            previewWebView.getEngine().load(previewFile.toUri().toString());
+            
+        } catch (Exception e) {
+            // Show error in the preview
+            String errorHtml = "<html><body><h2>Preview Error</h2><p>Error generating preview: " + 
+                             e.getMessage() + "</p></body></html>";
+            previewWebView.getEngine().loadContent(errorHtml);
+            System.err.println("Error updating preview: " + e.getMessage());
+        }
+    }
+
+    private void updatePreviewIfVisible() {
+        if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Preview")) {
+            updatePreview();
+        }
     }
 }
