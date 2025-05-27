@@ -2,6 +2,8 @@ module media.samson.jamplate {
     // JavaFX dependencies
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.web;
+    requires javafx.media;
     requires org.controlsfx.controls;
     
     // Rich text editor dependencies
