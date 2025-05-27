@@ -48,12 +48,13 @@
 
 /* Basic syntax highlighting preparations */
 .keyword {
-    -fx-fill: #0000ff;
+    -fx-fill: #0000FF;
     -fx-font-weight: bold;
 }
 
 .string {
     -fx-fill: #008000;
+    -fx-font-style: italic;
 }
 
 .comment {
@@ -62,31 +63,35 @@
 }
 
 .number {
-    -fx-fill: #0000ff;
+    -fx-fill: #1E90FF;
+    -fx-font-weight: bold;
 }
 
 .bracket {
-    -fx-fill: #000000;
+    -fx-fill: #0066CC;
     -fx-font-weight: bold;
 }
 
 .operator {
-    -fx-fill: #000000;
+    -fx-fill: #FF4500;
     -fx-font-weight: bold;
 }
 
 /* HTML and PHP specific styles */
 .attribute {
-    -fx-fill: #7D7D7D;
+    -fx-fill: #7D4B7D;
+    -fx-font-weight: bold;
 }
 
 .variable {
     -fx-fill: #008080;
+    -fx-font-weight: bold;
 }
 
 .template-variable {
     -fx-fill: #C71585;
     -fx-font-weight: bold;
+    -fx-background-color: #FFF0F5;
 }
 
 .paragraph-box:has-caret {

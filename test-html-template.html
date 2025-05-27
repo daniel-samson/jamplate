@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{$JamplateProjectName}} - Sample Template</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main content section -->
+        <h1>Welcome to {{$title}}</h1>
+        
+        <p>Hello <strong>{{$name}}</strong>! This is a sample HTML template.</p>
+        
+        <h2>Project Information</h2>
+        <ul>
+            <li><strong>Project:</strong> {{$JamplateProjectName}}</li>
+            <li><strong>Created:</strong> {{$JamplateDocumentCreateAt}}</li>
+            <li><strong>Description:</strong> {{$description}}</li>
+        </ul>
+        
+        <h3>Features</h3>
+        <div id="features">
+            <p>This template demonstrates:</p>
+            <ol>
+                <li>HTML syntax highlighting with <em>tags</em> and <code>attributes</code></li>
+                <li>Jamplate variables like {{$variable_name}}</li>
+                <li>CSS styling within &lt;style&gt; tags</li>
+                <li>HTML entities like &amp;copy; &lt; &gt; &amp;nbsp;</li>
+            </ol>
+        </div>
+        
+        <!-- Contact information -->
+        <footer>
+            <p>&copy; 2025 {{$company}}. All rights reserved.</p>
+            <p>Contact: <a href="mailto:{{$email}}">{{$email}}</a></p>
+        </footer>
+    </div>
+</body>
+</html> 
