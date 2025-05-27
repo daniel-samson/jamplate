@@ -26,10 +26,10 @@ public class TemplateEditorSyntaxHighlighter {
     private TemplateFileType templateType;
     
     // HTML patterns
-    private static final String HTML_TAG_PATTERN = "</?\\w+[^>]*>|<!DOCTYPE[^>]*>";
-    private static final String HTML_ATTR_NAME_PATTERN = "\\s([a-zA-Z0-9_-]*)\\s*=\\s*";
-    private static final String HTML_ATTR_VALUE_PATTERN = "\"([^\"]*)\"";
-    private static final String HTML_COMMENT_PATTERN = "<!--[^>]*-->";
+    private static final String HTML_TAG_PATTERN = "</?\\b[a-zA-Z][a-zA-Z0-9]*\\b[^>]*>|<!DOCTYPE[^>]*>|<!--[^>]*-->";
+    private static final String HTML_ATTR_NAME_PATTERN = "\\s([a-zA-Z][a-zA-Z0-9_-]*)\\s*=";
+    private static final String HTML_ATTR_VALUE_PATTERN = "=\\s*([\"'][^\"']*[\"']|[^\\s>]+)";
+    private static final String HTML_COMMENT_PATTERN = "<!--[\\s\\S]*?-->";
     private static final String HTML_ENTITY_PATTERN = "&[a-zA-Z0-9#]+;";
     
     // PHP patterns
@@ -126,8 +126,10 @@ public class TemplateEditorSyntaxHighlighter {
      * @param templateType The template file type
      */
     public void setTemplateType(TemplateFileType templateType) {
+        System.out.println("TemplateEditorSyntaxHighlighter: Setting template type to: " + templateType);
         this.templateType = templateType;
         highlightText();
+        System.out.println("TemplateEditorSyntaxHighlighter: Highlighting applied for: " + templateType);
     }
     
     /**

@@ -1128,6 +1128,12 @@ public class HelloController {
             projectFile = ProjectFile.open(projectFilePath);
             
             if (projectFile != null) {
+                // Update syntax highlighting immediately after project creation
+                if (syntaxHighlighter != null) {
+                    System.out.println("Setting syntax highlighter to: " + templateType);
+                    syntaxHighlighter.setTemplateType(templateType);
+                }
+                
                 // Update UI to reflect the new project
                 updateUIForProject();
                 System.out.println("Project file created successfully at: " + projectFilePath);
@@ -1246,7 +1252,10 @@ public class HelloController {
                     // Update syntax highlighting based on template file type
                     if (syntaxHighlighter != null) {
                         TemplateFileType fileType = projectFile.getTemplateFileType();
+                        System.out.println("Updating syntax highlighter to: " + fileType + " for file: " + templatePath);
                         syntaxHighlighter.setTemplateType(fileType);
+                        // Force a re-highlight after loading content
+                        Platform.runLater(() -> syntaxHighlighter.highlightText());
                     }
                 }
             } catch (IOException e) {
