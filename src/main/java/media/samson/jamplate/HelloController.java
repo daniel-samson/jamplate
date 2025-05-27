@@ -209,6 +209,29 @@ public class HelloController {
         templateEditor.setParagraphGraphicFactory(LineNumberFactory.get(templateEditor));
         templateEditor.setWrapText(true);
         
+        // Add keyboard event handler for autocomplete menu
+        templateEditor.setOnKeyPressed(event -> {
+            // Close autocomplete menu on SPACE or > key press
+            if (autocompleteMenu.isShowing()) {
+                if (event.getCode() == KeyCode.SPACE || 
+                    event.getCode() == KeyCode.ESCAPE) {
+                    autocompleteMenu.hide();
+                    if (event.getCode() == KeyCode.ESCAPE) {
+                        event.consume(); // Consume ESCAPE so it doesn't propagate
+                    }
+                    // Don't consume SPACE so it gets typed
+                }
+            }
+        });
+        
+        // Add key typed handler for > character (more reliable for special characters)
+        templateEditor.setOnKeyTyped(event -> {
+            if (autocompleteMenu.isShowing() && ">".equals(event.getCharacter())) {
+                autocompleteMenu.hide();
+                // Don't consume so the > character gets typed
+            }
+        });
+        
         // Initialize syntax highlighting
         // Default to HTML, this will be updated when a project is loaded
         syntaxHighlighter = new TemplateEditorSyntaxHighlighter(templateEditor, TemplateFileType.HTML_FILE);
@@ -266,6 +289,8 @@ public class HelloController {
      * Sets up the autocomplete functionality for the template editor.
      * Detects when the user types "{{" and shows a popup with variable suggestions.
      * Variables are inserted in the format {{$variableName}} when selected.
+     * For HTML files, also detects when the user types "<" and shows HTML5 element suggestions.
+     * Also provides auto-closing for HTML tags when user types ">".
      */
     private void setupTemplateEditorAutocomplete() {
         templateEditor.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -277,14 +302,37 @@ public class HelloController {
             // Get cursor position
             int caretPosition = templateEditor.getCaretPosition();
             
-            // Check if we have enough characters before the cursor
+            // Check for Jamplate variable autocomplete: "{{"
             if (caretPosition >= 2) {
                 // Get the two characters before the cursor
                 String lastTwoChars = newValue.substring(caretPosition - 2, caretPosition);
                 
-                // If the last two chars are "{{", show autocomplete
+                // If the last two chars are "{{", show variable autocomplete
                 if ("{{".equals(lastTwoChars)) {
                     showVariableAutocomplete();
+                    return; // Don't check for HTML autocomplete if we're showing variable autocomplete
+                }
+            }
+            
+            // Check for HTML element autocomplete: "<" (only for HTML files)
+            if (caretPosition >= 1 && projectFile != null && 
+                projectFile.getTemplateFileType() == TemplateFileType.HTML_FILE) {
+                
+                // Get the character before the cursor
+                String lastChar = newValue.substring(caretPosition - 1, caretPosition);
+                
+                // If the last char is "<", show HTML autocomplete
+                if ("<".equals(lastChar)) {
+                    // Check if this is not part of a closing tag or existing tag
+                    if (!isPartOfExistingTag(newValue, caretPosition)) {
+                        showHtmlAutocomplete();
+                    }
+                }
+                
+                // Check for auto-closing: ">" 
+                else if (">".equals(lastChar)) {
+                    // Auto-close HTML tags when user completes an opening tag
+                    autoCloseHtmlTag(caretPosition, newValue);
                 }
             }
         });
@@ -329,6 +377,121 @@ public class HelloController {
     }
     
     /**
+     * Shows the HTML element autocomplete popup with common HTML5 elements.
+     * When selected, HTML elements will be inserted with proper opening and closing tags.
+     */
+    private void showHtmlAutocomplete() {
+        // Clear existing items
+        autocompleteMenu.getItems().clear();
+        
+        // Get common HTML5 elements
+        List<HtmlElement> htmlElements = getCommonHtml5Elements();
+        
+        // Add HTML elements to menu
+        for (HtmlElement element : htmlElements) {
+            MenuItem item = new MenuItem(element.getDisplayText());
+            item.setOnAction(e -> insertHtmlElement(element));
+            autocompleteMenu.getItems().add(item);
+        }
+        
+        // Position the menu at the cursor
+        javafx.geometry.Bounds caretBounds = templateEditor.getCaretBounds().get();
+        Point2D caretPos = new Point2D(caretBounds.getMinX(), caretBounds.getMinY());
+        Point2D screenPos = templateEditor.localToScreen(caretPos);
+        
+        autocompleteMenu.show(templateEditor, screenPos.getX(), screenPos.getY());
+    }
+    
+    /**
+     * Returns a list of common HTML5 elements organized by category.
+     * 
+     * @return List of HTML elements for autocomplete
+     */
+    private List<HtmlElement> getCommonHtml5Elements() {
+        List<HtmlElement> elements = new ArrayList<>();
+        
+        // Document structure
+        elements.add(new HtmlElement("html", "Document root", true));
+        elements.add(new HtmlElement("head", "Document metadata", true));
+        elements.add(new HtmlElement("body", "Document body", true));
+        elements.add(new HtmlElement("title", "Document title", true));
+        elements.add(new HtmlElement("meta", "Metadata", false));
+        elements.add(new HtmlElement("link", "External resource link", false));
+        elements.add(new HtmlElement("script", "Script", true));
+        elements.add(new HtmlElement("style", "CSS styles", true));
+        
+        // Content sectioning
+        elements.add(new HtmlElement("header", "Page/section header", true));
+        elements.add(new HtmlElement("nav", "Navigation", true));
+        elements.add(new HtmlElement("main", "Main content", true));
+        elements.add(new HtmlElement("section", "Content section", true));
+        elements.add(new HtmlElement("article", "Article", true));
+        elements.add(new HtmlElement("aside", "Sidebar content", true));
+        elements.add(new HtmlElement("footer", "Page/section footer", true));
+        
+        // Headings and text
+        elements.add(new HtmlElement("h1", "Main heading", true));
+        elements.add(new HtmlElement("h2", "Section heading", true));
+        elements.add(new HtmlElement("h3", "Subsection heading", true));
+        elements.add(new HtmlElement("h4", "Sub-subsection heading", true));
+        elements.add(new HtmlElement("h5", "Minor heading", true));
+        elements.add(new HtmlElement("h6", "Smallest heading", true));
+        elements.add(new HtmlElement("p", "Paragraph", true));
+        elements.add(new HtmlElement("div", "Generic container", true));
+        elements.add(new HtmlElement("span", "Inline container", true));
+        elements.add(new HtmlElement("br", "Line break", false));
+        elements.add(new HtmlElement("hr", "Horizontal rule", false));
+        
+        // Text formatting
+        elements.add(new HtmlElement("strong", "Strong emphasis", true));
+        elements.add(new HtmlElement("em", "Emphasis", true));
+        elements.add(new HtmlElement("b", "Bold text", true));
+        elements.add(new HtmlElement("i", "Italic text", true));
+        elements.add(new HtmlElement("u", "Underlined text", true));
+        elements.add(new HtmlElement("mark", "Highlighted text", true));
+        elements.add(new HtmlElement("small", "Small text", true));
+        elements.add(new HtmlElement("sub", "Subscript", true));
+        elements.add(new HtmlElement("sup", "Superscript", true));
+        
+        // Lists
+        elements.add(new HtmlElement("ul", "Unordered list", true));
+        elements.add(new HtmlElement("ol", "Ordered list", true));
+        elements.add(new HtmlElement("li", "List item", true));
+        elements.add(new HtmlElement("dl", "Description list", true));
+        elements.add(new HtmlElement("dt", "Description term", true));
+        elements.add(new HtmlElement("dd", "Description details", true));
+        
+        // Links and media
+        elements.add(new HtmlElement("a", "Hyperlink", true));
+        elements.add(new HtmlElement("img", "Image", false));
+        elements.add(new HtmlElement("video", "Video", true));
+        elements.add(new HtmlElement("audio", "Audio", true));
+        elements.add(new HtmlElement("source", "Media source", false));
+        
+        // Forms
+        elements.add(new HtmlElement("form", "Form", true));
+        elements.add(new HtmlElement("input", "Input field", false));
+        elements.add(new HtmlElement("textarea", "Text area", true));
+        elements.add(new HtmlElement("button", "Button", true));
+        elements.add(new HtmlElement("select", "Dropdown", true));
+        elements.add(new HtmlElement("option", "Dropdown option", true));
+        elements.add(new HtmlElement("label", "Form label", true));
+        elements.add(new HtmlElement("fieldset", "Form group", true));
+        elements.add(new HtmlElement("legend", "Fieldset title", true));
+        
+        // Tables
+        elements.add(new HtmlElement("table", "Table", true));
+        elements.add(new HtmlElement("thead", "Table header", true));
+        elements.add(new HtmlElement("tbody", "Table body", true));
+        elements.add(new HtmlElement("tfoot", "Table footer", true));
+        elements.add(new HtmlElement("tr", "Table row", true));
+        elements.add(new HtmlElement("th", "Table header cell", true));
+        elements.add(new HtmlElement("td", "Table data cell", true));
+        
+        return elements;
+    }
+    
+    /**
      * Inserts a variable at the current cursor position in the format "{{$variableName}}".
      * 
      * @param variableName The name of the variable to insert
@@ -342,6 +505,43 @@ public class HelloController {
         
         // Insert the variable with proper format: {{$variableName}}
         templateEditor.insertText(caretPosition - 2, "{{$" + variableName + "}}");
+        
+        // Hide the autocomplete menu
+        autocompleteMenu.hide();
+    }
+    
+    /**
+     * Inserts an HTML element at the current cursor position.
+     * For container elements, inserts both opening and closing tags with cursor positioned inside.
+     * For self-closing elements, inserts a single tag.
+     * 
+     * @param element The HTML element to insert
+     */
+    private void insertHtmlElement(HtmlElement element) {
+        // Get current position
+        int caretPosition = templateEditor.getCaretPosition();
+        
+        // Remove the "<" that triggered the autocomplete
+        templateEditor.deleteText(caretPosition - 1, caretPosition);
+        
+        String insertText;
+        int finalCaretPosition;
+        
+        if (element.isContainer()) {
+            // For container elements, insert opening and closing tags
+            insertText = "<" + element.getTagName() + "></" + element.getTagName() + ">";
+            finalCaretPosition = caretPosition - 1 + element.getTagName().length() + 2; // Position cursor inside the tags
+        } else {
+            // For self-closing elements, insert a single tag
+            insertText = "<" + element.getTagName() + ">";
+            finalCaretPosition = caretPosition - 1 + insertText.length(); // Position cursor after the tag
+        }
+        
+        // Insert the HTML element
+        templateEditor.insertText(caretPosition - 1, insertText);
+        
+        // Position cursor appropriately
+        Platform.runLater(() -> templateEditor.moveTo(finalCaretPosition));
         
         // Hide the autocomplete menu
         autocompleteMenu.hide();
@@ -1427,5 +1627,147 @@ public class HelloController {
         }
         
         return headers;
+    }
+
+    /**
+     * Checks if the current "<" character is part of an existing tag (like in a closing tag or attribute).
+     * This prevents autocomplete from showing inappropriately.
+     * 
+     * @param text The full text content
+     * @param caretPosition The current cursor position
+     * @return true if the "<" is part of an existing tag structure
+     */
+    private boolean isPartOfExistingTag(String text, int caretPosition) {
+        // Look backwards from cursor to see if we're already inside a tag
+        for (int i = caretPosition - 2; i >= 0; i--) {
+            char c = text.charAt(i);
+            if (c == '>') {
+                // Found closing bracket, we're not inside a tag
+                return false;
+            } else if (c == '<') {
+                // Found opening bracket, we might be inside a tag
+                // Check if this looks like a closing tag
+                if (i + 1 < text.length() && text.charAt(i + 1) == '/') {
+                    return true; // This is a closing tag like "</div"
+                }
+                // Check if we have letters after the < (indicating an existing tag)
+                for (int j = i + 1; j < caretPosition - 1; j++) {
+                    if (Character.isLetter(text.charAt(j))) {
+                        return true; // We're inside an existing tag like "<div "
+                    }
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Automatically closes HTML tags when the user types ">".
+     * Analyzes the tag that was just completed and inserts the appropriate closing tag.
+     * 
+     * @param caretPosition The current cursor position (after the ">")
+     * @param text The current text content
+     */
+    private void autoCloseHtmlTag(int caretPosition, String text) {
+        // Find the opening tag that was just completed
+        String tagName = findCompletedTagName(text, caretPosition - 1);
+        
+        if (tagName != null && shouldAutoClose(tagName)) {
+            // Insert the closing tag and position cursor between opening and closing tags
+            String closingTag = "</" + tagName + ">";
+            Platform.runLater(() -> {
+                int currentCaret = templateEditor.getCaretPosition();
+                templateEditor.insertText(currentCaret, closingTag);
+                // Position cursor before the closing tag
+                templateEditor.moveTo(currentCaret);
+            });
+        }
+    }
+    
+    /**
+     * Finds the tag name of the opening tag that was just completed with ">".
+     * 
+     * @param text The current text content
+     * @param closingBracketPosition The position of the ">" character
+     * @return The tag name if found, null otherwise
+     */
+    private String findCompletedTagName(String text, int closingBracketPosition) {
+        // Look backwards from the ">" to find the opening "<"
+        for (int i = closingBracketPosition - 1; i >= 0; i--) {
+            char c = text.charAt(i);
+            
+            if (c == '<') {
+                // Found the opening bracket, extract the tag name
+                StringBuilder tagName = new StringBuilder();
+                
+                // Start reading after the "<"
+                for (int j = i + 1; j < closingBracketPosition; j++) {
+                    char ch = text.charAt(j);
+                    
+                    // Stop at space, tab, or other whitespace (attributes start)
+                    if (Character.isWhitespace(ch)) {
+                        break;
+                    }
+                    
+                    // Skip if this is a closing tag (starts with "/")
+                    if (j == i + 1 && ch == '/') {
+                        return null;
+                    }
+                    
+                    // Skip if this is a comment or doctype
+                    if (j == i + 1 && ch == '!') {
+                        return null;
+                    }
+                    
+                    // Only collect letters, numbers, and hyphens for tag name
+                    if (Character.isLetterOrDigit(ch) || ch == '-') {
+                        tagName.append(ch);
+                    } else {
+                        // Invalid character in tag name
+                        break;
+                    }
+                }
+                
+                // Return the tag name if we found one
+                if (tagName.length() > 0) {
+                    return tagName.toString().toLowerCase();
+                }
+            }
+            
+            // If we encounter another ">", we've gone too far
+            if (c == '>') {
+                break;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Determines if a tag should be auto-closed.
+     * Self-closing tags and certain special tags should not be auto-closed.
+     * 
+     * @param tagName The tag name to check
+     * @return true if the tag should be auto-closed, false otherwise
+     */
+    private boolean shouldAutoClose(String tagName) {
+        // List of self-closing/void HTML elements that don't need closing tags
+        Set<String> voidElements = Set.of(
+            "area", "base", "br", "col", "embed", "hr", "img", "input",
+            "link", "meta", "param", "source", "track", "wbr"
+        );
+        
+        // Special elements that typically don't get auto-closed
+        Set<String> specialElements = Set.of(
+            "!doctype", "!--", "?xml"
+        );
+        
+        String lowerTagName = tagName.toLowerCase();
+        
+        // Don't auto-close void elements or special elements
+        return !voidElements.contains(lowerTagName) && 
+               !specialElements.contains(lowerTagName) &&
+               !lowerTagName.startsWith("!");
     }
 }
