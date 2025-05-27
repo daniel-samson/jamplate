@@ -25,6 +25,9 @@ public class VariablesDialog extends Dialog<Variable> {
     // Validation labels
     private final Label nameErrorLabel;
     
+    // Faker service for generating fake data
+    private final FakerService fakerService;
+    
     private static final String ERROR_STYLE = "-fx-text-fill: red; -fx-font-size: 11px; -fx-padding: 2 0 0 0;";
     
     /**
@@ -34,7 +37,9 @@ public class VariablesDialog extends Dialog<Variable> {
      */
     public VariablesDialog(Window owner) {
         setTitle("Add Variable");
-        // Delay setting owner until after dialog initialization
+        
+        // Initialize faker service
+        fakerService = new FakerService();
         
         // Create the content pane
         GridPane grid = new GridPane();
@@ -59,27 +64,24 @@ public class VariablesDialog extends Dialog<Variable> {
             }
         });
         
-        // Type dropdown
+        // Type dropdown with faker types
         typeComboBox = new ComboBox<>();
         typeComboBox.setPromptText("Select Type");
         typeComboBox.setId("typeComboBox");
-        typeComboBox.getItems().addAll(
-            "Text",
-            "Name",
-            "Address",
-            "Phone",
-            "Email",
-            "Company",
-            "Date",
-            "Number",
-            "UUID"
-        );
+        typeComboBox.getItems().addAll(FakerService.getAvailableTypes());
         typeComboBox.setValue("Text"); // Set default value
         typeComboBox.setMaxWidth(Double.MAX_VALUE);
         
-        // Value field (placeholder for future CSV feature)
+        // Add listener to generate fake data when type changes
+        typeComboBox.valueProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null && !newValue.equals(oldValue)) {
+                generateFakeValue(newValue);
+            }
+        });
+        
+        // Value field with updated prompt text
         valueField = new TextField();
-        valueField.setPromptText("Value (placeholder)");
+        valueField.setPromptText("Generated fake value (editable)");
         valueField.setId("valueField");
         
         // Labels
@@ -98,6 +100,9 @@ public class VariablesDialog extends Dialog<Variable> {
         
         grid.add(valueLabel, 0, ++row);
         grid.add(valueField, 1, row);
+        
+        // Generate initial fake value for default type
+        Platform.runLater(() -> generateFakeValue("Text"));
         
         // Create dialog buttons using standard ButtonType constants
         getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -198,6 +203,36 @@ public class VariablesDialog extends Dialog<Variable> {
         
         // Focus on value field instead of name field for editing
         valueField.requestFocus();
+    }
+    
+    /**
+     * Generates a fake value based on the selected type and sets it in the value field.
+     * 
+     * @param type The type of fake data to generate
+     */
+    private void generateFakeValue(String type) {
+        if (type != null && fakerService != null) {
+            try {
+                String fakeValue = fakerService.generateFakeData(type);
+                valueField.setText(fakeValue);
+                
+                // Add a subtle visual feedback to show the value was generated
+                valueField.setStyle("-fx-background-color: #f0f8ff;");
+                
+                // Reset the background color after a short delay
+                Platform.runLater(() -> {
+                    try {
+                        Thread.sleep(500);
+                        Platform.runLater(() -> valueField.setStyle(""));
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Error generating fake value for type '" + type + "': " + e.getMessage());
+                // Don't change the value field if there's an error
+            }
+        }
     }
     
     /**

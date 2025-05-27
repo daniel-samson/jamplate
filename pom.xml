@@ -65,6 +65,13 @@ We'll add it back when project opening functionality is working.
             <version>1.10.0</version>
         </dependency>
         
+        <!-- Faker library for generating fake data -->
+        <dependency>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>2.4.3</version>
+        </dependency>
+        
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
