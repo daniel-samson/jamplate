@@ -422,6 +422,70 @@ public class JamplateUITest {
         robot.press(KeyCode.ESCAPE); // Close dialog
     }
 
+    @Test
+    public void testClipboardFunctionalityBasic(FxRobot robot) throws Exception {
+        // Create a test project first
+        createTestProjectViaUI(robot);
+        
+        // Switch to Template tab
+        robot.clickOn("Template");
+        
+        // Add some content
+        robot.clickOn(".code-area");
+        robot.write("Test clipboard content");
+        
+        // Test copy functionality
+        robot.press(KeyCode.CONTROL, KeyCode.A); // Select all
+        robot.press(KeyCode.CONTROL, KeyCode.C); // Copy
+        
+        // Clear the editor
+        robot.press(KeyCode.DELETE);
+        
+        // Test paste functionality
+        robot.press(KeyCode.CONTROL, KeyCode.V); // Paste
+        
+        // Verify content was pasted
+        Thread.sleep(500);
+        org.fxmisc.richtext.CodeArea editor = robot.lookup(".code-area").query();
+        assertEquals("Test clipboard content", editor.getText(), "Content should be pasted correctly");
+    }
+
+    @Test
+    public void testClipboardButtonStates(FxRobot robot) throws Exception {
+        // Create a test project first
+        createTestProjectViaUI(robot);
+        
+        // Test in Variables tab - clipboard buttons should be disabled
+        robot.clickOn("Variables");
+        
+        Button cutButton = robot.lookup("#btnCut").query();
+        Button copyButton = robot.lookup("#btnCopy").query();
+        Button pasteButton = robot.lookup("#btnPaste").query();
+        
+        assertTrue(cutButton.isDisabled(), "Cut button should be disabled in Variables tab");
+        assertTrue(copyButton.isDisabled(), "Copy button should be disabled in Variables tab");
+        assertTrue(pasteButton.isDisabled(), "Paste button should be disabled in Variables tab");
+        
+        // Test in Template tab - buttons should be enabled based on selection and clipboard
+        robot.clickOn("Template");
+        robot.clickOn(".code-area");
+        robot.write("Some text to select");
+        
+        // No selection - cut and copy should be disabled
+        robot.press(KeyCode.END); // Clear any selection
+        Thread.sleep(200); // Wait for state update
+        
+        assertTrue(cutButton.isDisabled(), "Cut button should be disabled when no text is selected");
+        assertTrue(copyButton.isDisabled(), "Copy button should be disabled when no text is selected");
+        
+        // With selection - cut and copy should be enabled
+        robot.press(KeyCode.CONTROL, KeyCode.A); // Select all
+        Thread.sleep(200); // Wait for state update
+        
+        assertFalse(cutButton.isDisabled(), "Cut button should be enabled when text is selected");
+        assertFalse(copyButton.isDisabled(), "Copy button should be enabled when text is selected");
+    }
+
     // Helper methods
 
     private void createTestProject() throws Exception {
