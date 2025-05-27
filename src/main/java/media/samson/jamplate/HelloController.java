@@ -290,6 +290,7 @@ public class HelloController {
      * Detects when the user types "{{" and shows a popup with variable suggestions.
      * Variables are inserted in the format {{$variableName}} when selected.
      * For HTML files, also detects when the user types "<" and shows HTML5 element suggestions.
+     * Also provides auto-closing for HTML tags when user types ">".
      */
     private void setupTemplateEditorAutocomplete() {
         templateEditor.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -326,6 +327,12 @@ public class HelloController {
                     if (!isPartOfExistingTag(newValue, caretPosition)) {
                         showHtmlAutocomplete();
                     }
+                }
+                
+                // Check for auto-closing: ">" 
+                else if (">".equals(lastChar)) {
+                    // Auto-close HTML tags when user completes an opening tag
+                    autoCloseHtmlTag(caretPosition, newValue);
                 }
             }
         });
@@ -1653,5 +1660,114 @@ public class HelloController {
             }
         }
         return false;
+    }
+    
+    /**
+     * Automatically closes HTML tags when the user types ">".
+     * Analyzes the tag that was just completed and inserts the appropriate closing tag.
+     * 
+     * @param caretPosition The current cursor position (after the ">")
+     * @param text The current text content
+     */
+    private void autoCloseHtmlTag(int caretPosition, String text) {
+        // Find the opening tag that was just completed
+        String tagName = findCompletedTagName(text, caretPosition - 1);
+        
+        if (tagName != null && shouldAutoClose(tagName)) {
+            // Insert the closing tag and position cursor between opening and closing tags
+            String closingTag = "</" + tagName + ">";
+            Platform.runLater(() -> {
+                int currentCaret = templateEditor.getCaretPosition();
+                templateEditor.insertText(currentCaret, closingTag);
+                // Position cursor before the closing tag
+                templateEditor.moveTo(currentCaret);
+            });
+        }
+    }
+    
+    /**
+     * Finds the tag name of the opening tag that was just completed with ">".
+     * 
+     * @param text The current text content
+     * @param closingBracketPosition The position of the ">" character
+     * @return The tag name if found, null otherwise
+     */
+    private String findCompletedTagName(String text, int closingBracketPosition) {
+        // Look backwards from the ">" to find the opening "<"
+        for (int i = closingBracketPosition - 1; i >= 0; i--) {
+            char c = text.charAt(i);
+            
+            if (c == '<') {
+                // Found the opening bracket, extract the tag name
+                StringBuilder tagName = new StringBuilder();
+                
+                // Start reading after the "<"
+                for (int j = i + 1; j < closingBracketPosition; j++) {
+                    char ch = text.charAt(j);
+                    
+                    // Stop at space, tab, or other whitespace (attributes start)
+                    if (Character.isWhitespace(ch)) {
+                        break;
+                    }
+                    
+                    // Skip if this is a closing tag (starts with "/")
+                    if (j == i + 1 && ch == '/') {
+                        return null;
+                    }
+                    
+                    // Skip if this is a comment or doctype
+                    if (j == i + 1 && ch == '!') {
+                        return null;
+                    }
+                    
+                    // Only collect letters, numbers, and hyphens for tag name
+                    if (Character.isLetterOrDigit(ch) || ch == '-') {
+                        tagName.append(ch);
+                    } else {
+                        // Invalid character in tag name
+                        break;
+                    }
+                }
+                
+                // Return the tag name if we found one
+                if (tagName.length() > 0) {
+                    return tagName.toString().toLowerCase();
+                }
+            }
+            
+            // If we encounter another ">", we've gone too far
+            if (c == '>') {
+                break;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Determines if a tag should be auto-closed.
+     * Self-closing tags and certain special tags should not be auto-closed.
+     * 
+     * @param tagName The tag name to check
+     * @return true if the tag should be auto-closed, false otherwise
+     */
+    private boolean shouldAutoClose(String tagName) {
+        // List of self-closing/void HTML elements that don't need closing tags
+        Set<String> voidElements = Set.of(
+            "area", "base", "br", "col", "embed", "hr", "img", "input",
+            "link", "meta", "param", "source", "track", "wbr"
+        );
+        
+        // Special elements that typically don't get auto-closed
+        Set<String> specialElements = Set.of(
+            "!doctype", "!--", "?xml"
+        );
+        
+        String lowerTagName = tagName.toLowerCase();
+        
+        // Don't auto-close void elements or special elements
+        return !voidElements.contains(lowerTagName) && 
+               !specialElements.contains(lowerTagName) &&
+               !lowerTagName.startsWith("!");
     }
 }
