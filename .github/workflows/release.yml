@@ -1,0 +1,409 @@
+name: 🚀 Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v2.1.0, etc.
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  # Build cross-platform JAR distribution
+  build-jar:
+    name: 📦 Build JAR Distribution
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: ☕ Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: 📋 Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🔢 Get version
+      id: get_version
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: 🔨 Build JAR distribution
+      run: |
+        mvn clean compile -DskipTests
+        mvn package -DskipTests
+        mvn assembly:single -DskipTests
+        
+    - name: 📤 Upload JAR artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: jar-distribution
+        path: |
+          target/jamplate-*-distribution.zip
+          target/jamplate-*-distribution.tar.gz
+          target/jamplate-*.jar
+        retention-days: 5
+
+  # Build macOS native packages
+  build-macos:
+    name: 🍎 Build macOS Packages
+    runs-on: macos-latest
+    needs: build-jar
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: ☕ Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: 📋 Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🔨 Build project
+      run: |
+        mvn clean compile -DskipTests
+        mvn package -DskipTests
+        
+    - name: 📦 Create macOS native packages
+      run: |
+        # Create app bundle
+        jpackage \
+          --input target/dependencies \
+          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --main-class media.samson.jamplate.HelloApplication \
+          --name Jamplate \
+          --app-version 1.0.0 \
+          --vendor "Samson Media" \
+          --description "Jamplate - Template Management Tool" \
+          --copyright "Copyright 2025 Samson Media" \
+          --dest target/native/mac \
+          --type app-image \
+          --icon src/main/resources/icons/app-icon.icns \
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" \
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
+          --java-options "--add-modules java.desktop"
+          
+        # Create DMG installer
+        jpackage \
+          --input target/dependencies \
+          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --main-class media.samson.jamplate.HelloApplication \
+          --name Jamplate \
+          --app-version 1.0.0 \
+          --vendor "Samson Media" \
+          --description "Jamplate - Template Management Tool" \
+          --copyright "Copyright 2025 Samson Media" \
+          --dest target/native/mac \
+          --type dmg \
+          --icon src/main/resources/icons/app-icon.icns \
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" \
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
+          --java-options "--add-modules java.desktop"
+          
+    - name: 📤 Upload macOS artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-packages
+        path: |
+          target/native/mac/*.dmg
+          target/native/mac/*.app
+        retention-days: 5
+
+  # Build Windows native packages
+  build-windows:
+    name: 🪟 Build Windows Packages
+    runs-on: windows-latest
+    needs: build-jar
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: ☕ Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: 📋 Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🔨 Build project
+      run: |
+        mvn clean compile -DskipTests
+        mvn package -DskipTests
+        
+    - name: 📦 Create Windows native packages
+      run: |
+        # Create app image
+        jpackage `
+          --input target/dependencies `
+          --main-jar ../jamplate-1.0-SNAPSHOT.jar `
+          --main-class media.samson.jamplate.HelloApplication `
+          --name Jamplate `
+          --app-version 1.0.0 `
+          --vendor "Samson Media" `
+          --description "Jamplate - Template Management Tool" `
+          --dest target/native/windows `
+          --type app-image `
+          --icon src/main/resources/icons/app-icon.ico `
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" `
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" `
+          --java-options "--add-modules java.desktop"
+          
+        # Create MSI installer
+        jpackage `
+          --input target/dependencies `
+          --main-jar ../jamplate-1.0-SNAPSHOT.jar `
+          --main-class media.samson.jamplate.HelloApplication `
+          --name Jamplate `
+          --app-version 1.0.0 `
+          --vendor "Samson Media" `
+          --description "Jamplate - Template Management Tool" `
+          --dest target/native/windows `
+          --type msi `
+          --icon src/main/resources/icons/app-icon.ico `
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" `
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" `
+          --java-options "--add-modules java.desktop" `
+          --win-dir-chooser `
+          --win-menu `
+          --win-shortcut
+          
+    - name: 📤 Upload Windows artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-packages
+        path: |
+          target/native/windows/*.msi
+          target/native/windows/*.exe
+          target/native/windows/Jamplate
+        retention-days: 5
+
+  # Build Linux native packages
+  build-linux:
+    name: 🐧 Build Linux Packages
+    runs-on: ubuntu-latest
+    needs: build-jar
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: ☕ Set up Java 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: 📋 Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🔨 Build project
+      run: |
+        mvn clean compile -DskipTests
+        mvn package -DskipTests
+        
+    - name: 📦 Create Linux native packages
+      run: |
+        # Create app image
+        jpackage \
+          --input target/dependencies \
+          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --main-class media.samson.jamplate.HelloApplication \
+          --name jamplate \
+          --app-version 1.0.0 \
+          --vendor "Samson Media" \
+          --description "Jamplate - Template Management Tool" \
+          --dest target/native/linux \
+          --type app-image \
+          --icon src/main/resources/icons/app-icon.png \
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" \
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
+          --java-options "--add-modules java.desktop"
+          
+        # Create DEB package
+        jpackage \
+          --input target/dependencies \
+          --main-jar ../jamplate-1.0-SNAPSHOT.jar \
+          --main-class media.samson.jamplate.HelloApplication \
+          --name jamplate \
+          --app-version 1.0.0 \
+          --vendor "Samson Media" \
+          --description "Jamplate - Template Management Tool" \
+          --dest target/native/linux \
+          --type deb \
+          --icon src/main/resources/icons/app-icon.png \
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" \
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
+          --java-options "--add-modules java.desktop" \
+          --linux-package-name jamplate \
+          --linux-menu-group "Development" \
+          --linux-shortcut
+          
+    - name: 📤 Upload Linux artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-packages
+        path: |
+          target/native/linux/*.deb
+          target/native/linux/*.rpm
+          target/native/linux/jamplate
+        retention-days: 5
+
+  # Create GitHub Release
+  create-release:
+    name: 🎉 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-jar, build-macos, build-windows, build-linux]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📥 Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: 📋 Prepare release files
+      run: |
+        mkdir -p release-files
+        
+        # Copy JAR distributions
+        cp jar-distribution/*.zip release-files/ || true
+        cp jar-distribution/*.tar.gz release-files/ || true
+        
+        # Copy macOS packages
+        cp macos-packages/*.dmg release-files/ || true
+        
+        # Copy Windows packages  
+        cp windows-packages/*.msi release-files/ || true
+        cp windows-packages/*.exe release-files/ || true
+        
+        # Copy Linux packages
+        cp linux-packages/*.deb release-files/ || true
+        cp linux-packages/*.rpm release-files/ || true
+        
+        # Create ZIP archives for app bundles
+        if [ -d "macos-packages/Jamplate.app" ]; then
+          cd macos-packages && zip -r ../release-files/Jamplate-macOS-app.zip Jamplate.app && cd ..
+        fi
+        
+        if [ -d "windows-packages/Jamplate" ]; then
+          cd windows-packages && zip -r ../release-files/Jamplate-Windows-app.zip Jamplate && cd ..
+        fi
+        
+        if [ -d "linux-packages/jamplate" ]; then
+          cd linux-packages && tar -czf ../release-files/jamplate-Linux-app.tar.gz jamplate && cd ..
+        fi
+        
+        ls -la release-files/
+        
+    - name: 📝 Generate release notes
+      id: release_notes
+      run: |
+        cat > release_notes.md << 'EOF'
+        # Jamplate ${{ needs.build-jar.outputs.version }} Release
+        
+        ## 🎉 What's New
+        
+        Professional-grade template management application with native installers for all platforms.
+        
+        ## 📦 Download Options
+        
+        ### 🚀 Recommended for End Users (No Java Required)
+        - **macOS**: Download `Jamplate-1.0.0.dmg` - Double-click to install
+        - **Windows**: Download `Jamplate-1.0.0.msi` - Run installer
+        - **Linux**: Download `jamplate_1.0.0_amd64.deb` - Install with package manager
+        
+        ### ⚡ For Developers (Requires Java 21+)
+        - **Cross-Platform JAR**: Download `jamplate-1.0-SNAPSHOT-distribution.zip`
+        - Extract and run with included launch scripts
+        
+        ### 📱 Application Bundles
+        - **macOS App**: `Jamplate-macOS-app.zip` - Extract and run Jamplate.app
+        - **Windows App**: `Jamplate-Windows-app.zip` - Extract and run
+        - **Linux App**: `jamplate-Linux-app.tar.gz` - Extract and run
+        
+        ## ✨ Features
+        
+        - 🎨 **Professional UI** with custom branding and icons
+        - 📝 **Template Management** with variables and rich text editing
+        - 💾 **Project Management** with save/load functionality
+        - 📊 **CSV Import** for bulk variable management
+        - 🎯 **Export Capabilities** for generated content
+        - 🚀 **Native Performance** with embedded Java runtime
+        
+        ## 🔧 System Requirements
+        
+        ### Native Packages (Recommended)
+        - **macOS**: macOS 10.14+ (Mojave or later)
+        - **Windows**: Windows 10 or later
+        - **Linux**: Ubuntu 18.04+ / Debian 10+ / RHEL 8+
+        
+        ### JAR Distribution
+        - **Java**: Version 21 or later
+        - **Any OS**: Windows, macOS, Linux
+        
+        ## 🐛 Issues & Support
+        
+        Report issues on [GitHub Issues](https://github.com/daniel-samson/jamplate/issues)
+        EOF
+        
+        echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
+        
+    - name: 🎉 Create GitHub Release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ needs.build-jar.outputs.version }}
+        name: "Jamplate ${{ needs.build-jar.outputs.version }}"
+        bodyFile: release_notes.md
+        artifacts: "release-files/*"
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📊 Release Summary
+      run: |
+        echo "## 🎉 Release ${{ needs.build-jar.outputs.version }} Created Successfully!" 
+        echo ""
+        echo "### 📦 Packages Built:"
+        echo "- ✅ Cross-platform JAR distribution"
+        echo "- ✅ macOS DMG installer + app bundle"  
+        echo "- ✅ Windows MSI installer + app bundle"
+        echo "- ✅ Linux DEB package + app bundle"
+        echo ""
+        echo "### 🔗 Release URL:"
+        echo "https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-jar.outputs.version }}" 
