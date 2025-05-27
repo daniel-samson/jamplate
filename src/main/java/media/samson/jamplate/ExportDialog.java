@@ -65,6 +65,12 @@ public class ExportDialog extends Dialog<ExportDialog.ExportSettings> {
             }
         });
         
+        // Add file path autocompletion for CSV files
+        FilePathAutoComplete csvAutoComplete = FilePathAutoComplete.forFiles(csvFileField);
+        
+        // Set default CSV file location to home directory
+        csvFileField.setText(System.getProperty("user.home") + File.separator);
+        
         // CSV Browse button
         csvBrowseButton = new Button("Browse...");
         csvBrowseButton.setOnAction(e -> browseForCsvFile());
@@ -82,6 +88,9 @@ public class ExportDialog extends Dialog<ExportDialog.ExportSettings> {
                 hideError(directoryErrorLabel);
             }
         });
+        
+        // Add file path autocompletion for directories
+        FilePathAutoComplete.forDirectories(directoryField);
         
         // Directory Browse button
         directoryBrowseButton = new Button("Browse...");

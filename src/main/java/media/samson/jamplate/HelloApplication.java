@@ -11,10 +11,17 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class HelloApplication extends Application {
+    
+    private static HelloController controller;
+    
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
+        
+        // Store the controller for testing access
+        controller = fxmlLoader.getController();
+        
         stage.setTitle("Jamplate");
         
         // Set application icon
@@ -66,6 +73,15 @@ public class HelloApplication extends Application {
                 Platform.runLater(() -> stage.setAlwaysOnTop(false));
             }
         });
+    }
+    
+    /**
+     * Gets the main controller instance for testing purposes.
+     * 
+     * @return the HelloController instance, or null if not initialized
+     */
+    public static HelloController getController() {
+        return controller;
     }
 
     public static void main(String[] args) {

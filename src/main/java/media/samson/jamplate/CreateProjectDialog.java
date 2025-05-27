@@ -136,11 +136,13 @@ public class CreateProjectDialog extends Dialog<CreateProjectDialog.ProjectCreat
         directoryField.setPromptText("Project Location");
         directoryField.setId("directoryField");
         directoryField.textProperty().addListener((observable, oldValue, newValue) -> {
-            updateDirectorySuggestions(newValue);
             if (newValue != null && !newValue.trim().isEmpty()) {
                 hideError(directoryErrorLabel);
             }
         });
+        
+        // Add file path autocompletion for directories
+        FilePathAutoComplete.forDirectories(directoryField);
         
         // Template type selection
         templateTypeComboBox = new ComboBox<>();
@@ -245,62 +247,6 @@ public class CreateProjectDialog extends Dialog<CreateProjectDialog.ProjectCreat
         if (selectedDirectory != null) {
             directoryField.setText(selectedDirectory.getAbsolutePath());
         }
-    }
-    
-    /**
-     * Updates the auto-completion suggestions for the directory field.
-     * 
-     * @param text The current text in the directory field
-     */
-    private void updateDirectorySuggestions(String text) {
-        if (text == null || text.isEmpty()) {
-            return;
-        }
-        
-        // Get parent directory
-        Path currentPath = Paths.get(text);
-        Path parentPath = currentPath.getParent();
-        
-        if (parentPath == null || !Files.exists(parentPath)) {
-            return;
-        }
-        
-        // Get file name part for matching
-        String fileNamePart = currentPath.getFileName().toString().toLowerCase();
-        
-        // Create a context menu for auto-completion
-        ContextMenu contextMenu = new ContextMenu();
-        List<MenuItem> items = new ArrayList<>();
-        
-        try {
-            // Find matching directories
-            List<Path> suggestions = Files.list(parentPath)
-                .filter(Files::isDirectory)
-                .filter(path -> path.getFileName().toString().toLowerCase().startsWith(fileNamePart))
-                .limit(10) // Limit number of suggestions
-                .collect(Collectors.toList());
-            
-            // Create menu items for each suggestion
-            for (Path suggestion : suggestions) {
-                MenuItem item = new MenuItem(suggestion.toString());
-                item.setOnAction(e -> directoryField.setText(suggestion.toString()));
-                items.add(item);
-            }
-            
-            if (!items.isEmpty()) {
-                contextMenu.getItems().setAll(items);
-                if (!contextMenu.isShowing()) {
-                    contextMenu.show(directoryField, Side.BOTTOM, 0, 0);
-                }
-            } else {
-                contextMenu.hide();
-            }
-        } catch (Exception e) {
-            contextMenu.hide();
-        }
-        
-        // Set the context menu
-        directoryField.setContextMenu(contextMenu);
     }
     
     /**

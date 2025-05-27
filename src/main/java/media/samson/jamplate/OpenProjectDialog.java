@@ -55,6 +55,9 @@ public class OpenProjectDialog extends Dialog<String> {
             }
         });
         
+        // Add file path autocompletion for directories
+        FilePathAutoComplete.forDirectories(directoryField);
+        
         // Browse button
         browseButton = new Button("Browse...");
         browseButton.setOnAction(e -> browseForDirectory());
