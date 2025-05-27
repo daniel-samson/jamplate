@@ -9,7 +9,10 @@ on:
 jobs:
   test-build:
     name: 🧪 Test Build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     
     steps:
     - name: 📥 Checkout code
@@ -49,8 +52,9 @@ jobs:
       run: mvn assembly:single -DskipTests
       
     - name: ✅ Build verification
+      shell: bash
       run: |
-        echo "Build completed successfully!"
+        echo "Build completed successfully on ${{ matrix.os }}!"
         echo "Generated files:"
         ls -la target/jamplate-*.jar target/jamplate-*-distribution.* || true
         
@@ -59,8 +63,20 @@ jobs:
         jar tf target/jamplate-1.0-SNAPSHOT.jar | grep icons || true
 
   test-native-build:
-    name: 🧪 Test Native Package (macOS)
-    runs-on: macos-latest
+    name: 🧪 Test Native Package
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            icon: src/main/resources/icons/app-icon.png
+            name: jamplate-test
+          - os: windows-latest
+            icon: src/main/resources/icons/app-icon.ico
+            name: Jamplate-Test
+          - os: macos-latest
+            icon: src/main/resources/icons/app-icon.icns
+            name: Jamplate-Test
+    runs-on: ${{ matrix.os }}
     if: github.event_name == 'pull_request'  # Only run on PRs to save resources
     
     steps:
@@ -86,30 +102,41 @@ jobs:
         mvn package -DskipTests
         
     - name: 🧪 Test jpackage creation (app-image only)
+      shell: bash
       run: |
         # Prepare jpackage input directory with all JARs
         mkdir -p target/jpackage-input
         cp target/jamplate-1.0-SNAPSHOT.jar target/jpackage-input/
         cp target/dependencies/*.jar target/jpackage-input/
         
-        # Test creating just an app image (faster than full DMG)
+        # Test creating just an app image (faster than full installers)
         jpackage \
           --input target/jpackage-input \
           --main-jar jamplate-1.0-SNAPSHOT.jar \
           --main-class media.samson.jamplate.HelloApplication \
-          --name Jamplate-Test \
+          --name "${{ matrix.name }}" \
           --app-version 1.0.0 \
           --vendor "Samson Media" \
           --dest target/test-native \
           --type app-image \
-          --icon src/main/resources/icons/app-icon.icns \
+          --icon "${{ matrix.icon }}" \
           --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" \
           --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
           --java-options "--add-modules java.desktop"
           
     - name: ✅ Verify native package
+      shell: bash
       run: |
-        echo "Native package test completed!"
+        echo "Native package test completed on ${{ matrix.os }}!"
         ls -la target/test-native/
-        echo "App bundle contents:"
-        ls -la target/test-native/Jamplate-Test.app/Contents/ || true 
+        echo "Platform-specific verification:"
+        if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+          echo "macOS app bundle contents:"
+          ls -la target/test-native/${{ matrix.name }}.app/Contents/ || true
+        elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          echo "Windows app directory:"
+          ls -la target/test-native/${{ matrix.name }}/ || true
+        else
+          echo "Linux app directory:"
+          ls -la target/test-native/${{ matrix.name }}/ || true
+        fi 

@@ -190,7 +190,7 @@ jobs:
           --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" `
           --java-options "--add-modules java.desktop"
           
-        # Create MSI installer
+        # Create MSI installer (recommended for Windows)
         jpackage `
           --input target/jpackage-input `
           --main-jar jamplate-1.0-SNAPSHOT.jar `
@@ -201,6 +201,25 @@ jobs:
           --description "Jamplate - Template Management Tool" `
           --dest target/native/windows `
           --type msi `
+          --icon src/main/resources/icons/app-icon.ico `
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" `
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" `
+          --java-options "--add-modules java.desktop" `
+          --win-dir-chooser `
+          --win-menu `
+          --win-shortcut
+          
+        # Create EXE installer (alternative format)
+        jpackage `
+          --input target/jpackage-input `
+          --main-jar jamplate-1.0-SNAPSHOT.jar `
+          --main-class media.samson.jamplate.HelloApplication `
+          --name Jamplate `
+          --app-version 1.0.0 `
+          --vendor "Samson Media" `
+          --description "Jamplate - Template Management Tool" `
+          --dest target/native/windows `
+          --type exe `
           --icon src/main/resources/icons/app-icon.ico `
           --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" `
           --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" `
@@ -270,7 +289,7 @@ jobs:
           --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
           --java-options "--add-modules java.desktop"
           
-        # Create DEB package
+        # Create DEB package (Debian/Ubuntu)
         jpackage \
           --input target/jpackage-input \
           --main-jar jamplate-1.0-SNAPSHOT.jar \
@@ -281,6 +300,25 @@ jobs:
           --description "Jamplate - Template Management Tool" \
           --dest target/native/linux \
           --type deb \
+          --icon src/main/resources/icons/app-icon.png \
+          --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" \
+          --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
+          --java-options "--add-modules java.desktop" \
+          --linux-package-name jamplate \
+          --linux-menu-group "Development" \
+          --linux-shortcut
+          
+        # Create RPM package (Red Hat/Fedora/CentOS)
+        jpackage \
+          --input target/jpackage-input \
+          --main-jar jamplate-1.0-SNAPSHOT.jar \
+          --main-class media.samson.jamplate.HelloApplication \
+          --name jamplate \
+          --app-version 1.0.0 \
+          --vendor "Samson Media" \
+          --description "Jamplate - Template Management Tool" \
+          --dest target/native/linux \
+          --type rpm \
           --icon src/main/resources/icons/app-icon.png \
           --java-options "--add-exports javafx.graphics/com.sun.javafx.application=ALL-UNNAMED" \
           --java-options "--add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED" \
@@ -360,8 +398,9 @@ jobs:
         
         ### 🚀 Recommended for End Users (No Java Required)
         - **macOS**: Download `Jamplate-1.0.0.dmg` - Double-click to install
-        - **Windows**: Download `Jamplate-1.0.0.msi` - Run installer
-        - **Linux**: Download `jamplate_1.0.0_amd64.deb` - Install with package manager
+        - **Windows**: Download `Jamplate-1.0.0.msi` or `Jamplate-1.0.0.exe` - Run installer
+        - **Linux (Debian/Ubuntu)**: Download `jamplate_1.0.0_amd64.deb` - Install with `sudo dpkg -i`
+        - **Linux (Red Hat/Fedora)**: Download `jamplate-1.0.0-1.x86_64.rpm` - Install with `sudo rpm -i`
         
         ### ⚡ For Developers (Requires Java 21+)
         - **Cross-Platform JAR**: Download `jamplate-1.0-SNAPSHOT-distribution.zip`
@@ -385,8 +424,9 @@ jobs:
         
         ### Native Packages (Recommended)
         - **macOS**: macOS 10.14+ (Mojave or later)
-        - **Windows**: Windows 10 or later
-        - **Linux**: Ubuntu 18.04+ / Debian 10+ / RHEL 8+
+        - **Windows**: Windows 10 or later (supports both MSI and EXE installers)
+        - **Linux Debian/Ubuntu**: Ubuntu 18.04+ / Debian 10+ (DEB package)
+        - **Linux Red Hat/Fedora**: RHEL 8+ / Fedora 32+ / CentOS 8+ (RPM package)
         
         ### JAR Distribution
         - **Java**: Version 21 or later
@@ -417,8 +457,8 @@ jobs:
         echo "### 📦 Packages Built:"
         echo "- ✅ Cross-platform JAR distribution"
         echo "- ✅ macOS DMG installer + app bundle"  
-        echo "- ✅ Windows MSI installer + app bundle"
-        echo "- ✅ Linux DEB package + app bundle"
+        echo "- ✅ Windows MSI + EXE installers + app bundle"
+        echo "- ✅ Linux DEB + RPM packages + app bundle"
         echo ""
         echo "### 🔗 Release URL:"
         echo "https://github.com/${{ github.repository }}/releases/tag/${{ needs.build-jar.outputs.version }}" 
