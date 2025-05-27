@@ -1,6 +1,7 @@
 package media.samson.jamplate;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -42,8 +43,29 @@ public class HelloApplication extends Application {
             System.err.println("Warning: Could not load application icon: " + e.getMessage());
         }
         
+        // Configure stage properties for better focus behavior
+        stage.setResizable(true);
+        stage.setMinWidth(600);
+        stage.setMinHeight(400);
+        
+        // Center the stage on screen
+        stage.centerOnScreen();
+        
         stage.setScene(scene);
         stage.show();
+        
+        // Force the stage to the front and request focus (especially important on macOS)
+        Platform.runLater(() -> {
+            stage.toFront();
+            stage.requestFocus();
+            
+            // Additional focus handling for macOS
+            if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+                // Temporarily set always on top to bring window to front, then disable it
+                stage.setAlwaysOnTop(true);
+                Platform.runLater(() -> stage.setAlwaysOnTop(false));
+            }
+        });
     }
 
     public static void main(String[] args) {

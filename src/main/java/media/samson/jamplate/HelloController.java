@@ -1273,7 +1273,9 @@ public class HelloController {
             
             // Add to recent projects
             if (recentProjectsManager != null) {
-                recentProjectsManager.addRecentProject(directory, projectFile.getProjectName());
+                // Use the project directory path instead of the parent directory
+                String projectDirectoryPath = projectFile.getProjectDirectoryPath();
+                recentProjectsManager.addRecentProject(projectDirectoryPath, projectFile.getProjectName());
                 updateRecentProjectsMenu();
             }
         } else {
@@ -1377,7 +1379,9 @@ public class HelloController {
                 
                 // Add to recent projects
                 if (recentProjectsManager != null) {
-                    recentProjectsManager.addRecentProject(directory, projectName);
+                    // Use the project directory path instead of the parent directory
+                    String projectDirectoryPath = projectFile.getProjectDirectoryPath();
+                    recentProjectsManager.addRecentProject(projectDirectoryPath, projectFile.getProjectName());
                     updateRecentProjectsMenu();
                 }
             } else {

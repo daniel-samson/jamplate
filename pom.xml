@@ -17,6 +17,8 @@ We'll add it back when project opening functionality is working.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
         <javafx.version>21</javafx.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -110,7 +112,7 @@ We'll add it back when project opening functionality is working.
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.5.0</version>
+            <version>5.8.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -213,6 +215,29 @@ We'll add it back when project opening functionality is working.
                 <configuration>
                     <!-- Use simple main class for JavaFX plugin -->
                     <mainClass>media.samson.jamplate.HelloApplication</mainClass>
+                    <systemProperties>
+                        <!-- macOS specific properties for better focus behavior -->
+                        <systemProperty>
+                            <name>apple.awt.application.appearance</name>
+                            <value>system</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <name>apple.laf.useScreenMenuBar</name>
+                            <value>true</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <name>com.apple.mrj.application.apple.menu.about.name</name>
+                            <value>Jamplate</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <name>javafx.macosx.embedded</name>
+                            <value>false</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <name>glass.accessible.force</name>
+                            <value>false</value>
+                        </systemProperty>
+                    </systemProperties>
                     <options>
                         <!-- Add all necessary exports -->
                         <option>--add-exports</option>

@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * Unit tests for the CreateProjectDialog class.
@@ -817,5 +818,108 @@ public class CreateProjectDialogTest {
         latch.await(5, TimeUnit.SECONDS);
         assertEquals(TemplateFileType.TXT_FILE, defaultTypeRef.get(),
             "Template type should default to TXT_FILE");
+    }
+    
+    /**
+     * Test that newly created projects are added to the recent projects list.
+     * This test verifies the integration between CreateProjectDialog and RecentProjectsManager.
+     */
+    @Test
+    public void testNewProjectAddedToRecentProjects() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Boolean> projectAddedToRecentRef = new AtomicReference<>(false);
+        
+        Platform.runLater(() -> {
+            try {
+                // Create a temporary directory for testing
+                Path tempDir = Files.createTempDirectory("jamplateTestRecent");
+                String testProjectName = "RecentTestProject";
+                
+                // Create the dialog
+                CreateProjectDialog dialog = new CreateProjectDialog(mainStage);
+                
+                // Get dialog components
+                DialogPane dialogPane = dialog.getDialogPane();
+                TextField directoryField = (TextField) dialogPane.lookup("#directoryField");
+                TextField projectNameField = (TextField) dialogPane.lookup("#projectNameField");
+                ComboBox<TemplateFileType> templateTypeComboBox = 
+                    (ComboBox<TemplateFileType>) dialogPane.lookup("#templateTypeComboBox");
+                
+                // Set up the project creation parameters
+                directoryField.setText(tempDir.toString());
+                projectNameField.setText(testProjectName);
+                templateTypeComboBox.setValue(TemplateFileType.TXT_FILE);
+                
+                // Get the result (simulating Create button click)
+                ButtonType createButtonType = dialogPane.getButtonTypes().stream()
+                    .filter(bt -> bt.getButtonData() == ButtonBar.ButtonData.OK_DONE)
+                    .findFirst()
+                    .orElse(null);
+                
+                if (createButtonType != null) {
+                    CreateProjectDialog.ProjectCreationResult result = 
+                        dialog.getResultConverter().call(createButtonType);
+                    
+                    if (result != null) {
+                        // Simulate the project creation process that would happen in HelloController
+                        // Create the project file
+                        ProjectFile projectFile = new ProjectFile(
+                            result.getProjectName(), 
+                            result.getDirectory(), 
+                            result.getTemplateFileType()
+                        );
+                        
+                        // Save the project
+                        boolean saveResult = projectFile.save();
+                        
+                        if (saveResult) {
+                            // Test the recent projects functionality
+                            RecentProjectsManager recentProjectsManager = new RecentProjectsManager();
+                            
+                            // Clear any existing recent projects for clean test
+                            recentProjectsManager.clearRecentProjects();
+                            
+                            // Add the project to recent projects (as HelloController would do)
+                            String projectDirectoryPath = projectFile.getProjectDirectoryPath();
+                            recentProjectsManager.addRecentProject(projectDirectoryPath, result.getProjectName());
+                            
+                            // Verify the project was added to recent projects
+                            List<RecentProjectsManager.RecentProject> recentProjects = 
+                                recentProjectsManager.getRecentProjects(false);
+                            
+                            boolean found = recentProjects.stream()
+                                .anyMatch(rp -> rp.projectName.equals(testProjectName) && 
+                                              rp.projectFilePath.equals(projectDirectoryPath));
+                            
+                            projectAddedToRecentRef.set(found);
+                            
+                            // Clean up
+                            try {
+                                Files.deleteIfExists(Paths.get(projectFile.getProjectFilePath()));
+                                Files.deleteIfExists(Paths.get(projectFile.getTemplateFilePath()));
+                                Files.deleteIfExists(Paths.get(projectFile.getVariablesFilePath()));
+                                Files.deleteIfExists(Paths.get(projectDirectoryPath));
+                                Files.deleteIfExists(tempDir);
+                            } catch (Exception e) {
+                                System.err.println("Cleanup error: " + e.getMessage());
+                            }
+                        }
+                    }
+                }
+                
+                dialog.close();
+            } catch (Exception e) {
+                System.err.println("Error in recent projects test: " + e.getMessage());
+            } finally {
+                latch.countDown();
+            }
+        });
+        
+        // Wait for JavaFX operations to complete
+        latch.await(10, TimeUnit.SECONDS);
+        
+        // Verify the project was added to recent projects
+        assertTrue(projectAddedToRecentRef.get(), 
+                  "Newly created project should be added to recent projects list");
     }
 }
