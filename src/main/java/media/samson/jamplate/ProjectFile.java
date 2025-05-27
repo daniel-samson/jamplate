@@ -411,29 +411,42 @@ public class ProjectFile {
                 return false;
             }
             
-            // Create the project directory and file path
-            Path xmlFilePath;
-            Path projectDirPath;
-            
             // Create the project directory path
             Path locationPath = Paths.get(projectLocation);
-            projectDirPath = locationPath.resolve(projectName);
+            Path projectDirPath = locationPath.resolve(projectName);
             
             // Set the XML file path to be project.xml inside the project directory
-            xmlFilePath = projectDirPath.resolve("project.xml");
+            Path xmlFilePath = projectDirPath.resolve("project.xml");
             
             // Update the projectFilePath to match the new structure
             projectFilePath = xmlFilePath.toString();
             
-            // Create the project directory
+            // Create the project directory and all necessary parent directories
             try {
-                // Create the project directory
-                Files.createDirectories(projectDirPath);
+                // First, ensure the parent location directory exists
+                if (!Files.exists(locationPath)) {
+                    System.out.println("Creating parent directory: " + locationPath);
+                    Files.createDirectories(locationPath);
+                    
+                    if (!Files.exists(locationPath)) {
+                        System.err.println("Error: Failed to create parent directory: " + locationPath);
+                        return false;
+                    }
+                    System.out.println("Successfully created parent directory: " + locationPath);
+                }
                 
-                // Verify the project directory was created successfully
+                // Now create the project directory
                 if (!Files.exists(projectDirPath)) {
-                    System.err.println("Error: Failed to create project directory: " + projectDirPath);
-                    return false;
+                    System.out.println("Creating project directory: " + projectDirPath);
+                    Files.createDirectories(projectDirPath);
+                    
+                    if (!Files.exists(projectDirPath)) {
+                        System.err.println("Error: Failed to create project directory: " + projectDirPath);
+                        return false;
+                    }
+                    System.out.println("Successfully created project directory: " + projectDirPath);
+                } else {
+                    System.out.println("Project directory already exists: " + projectDirPath);
                 }
                 
                 // Create template file if template file type is set
@@ -492,9 +505,21 @@ public class ProjectFile {
                 System.out.println("Created project directory: " + projectDirPath);
             } catch (IOException e) {
                 System.err.println("Error: Failed to create project directory: " + e.getMessage());
+                System.err.println("  Location path: " + locationPath);
+                System.err.println("  Project directory path: " + projectDirPath);
+                System.err.println("  Cause: " + (e.getCause() != null ? e.getCause().getMessage() : "Unknown"));
                 return false;
             } catch (SecurityException e) {
                 System.err.println("Error: Permission denied when creating project directory: " + e.getMessage());
+                System.err.println("  Location path: " + locationPath);
+                System.err.println("  Project directory path: " + projectDirPath);
+                System.err.println("  Please check if you have write permissions to this location.");
+                return false;
+            } catch (Exception e) {
+                System.err.println("Error: Unexpected error when creating project directory: " + e.getMessage());
+                System.err.println("  Location path: " + locationPath);
+                System.err.println("  Project directory path: " + projectDirPath);
+                System.err.println("  Error type: " + e.getClass().getSimpleName());
                 return false;
             }
             

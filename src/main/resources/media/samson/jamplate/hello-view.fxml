@@ -33,9 +33,9 @@
               <MenuItem fx:id="menuUndo" text="_Undo" accelerator="shortcut+Z" onAction="#handleUndo" />
               <MenuItem fx:id="menuRedo" text="_Redo" onAction="#handleRedo" />
               <SeparatorMenuItem />
-              <MenuItem fx:id="menuCut" text="Cu_t" accelerator="shortcut+X" />
-              <MenuItem fx:id="menuCopy" text="_Copy" accelerator="shortcut+C" />
-              <MenuItem fx:id="menuPaste" text="_Paste" accelerator="shortcut+V" />
+              <MenuItem fx:id="menuCut" text="Cu_t" accelerator="shortcut+X" onAction="#handleCut" />
+              <MenuItem fx:id="menuCopy" text="_Copy" accelerator="shortcut+C" onAction="#handleCopy" />
+              <MenuItem fx:id="menuPaste" text="_Paste" accelerator="shortcut+V" onAction="#handlePaste" />
             </items>
           </Menu>
 
@@ -62,9 +62,9 @@
           <Button fx:id="btnOpen" text="Open" onAction="#handleOpen" />
           <Button fx:id="btnSave" text="Save" />
           <Separator />
-          <Button fx:id="btnCut" text="Cut" />
-          <Button fx:id="btnCopy" text="Copy" />
-          <Button fx:id="btnPaste" text="Paste" />
+          <Button fx:id="btnCut" text="Cut" onAction="#handleCut" />
+          <Button fx:id="btnCopy" text="Copy" onAction="#handleCopy" />
+          <Button fx:id="btnPaste" text="Paste" onAction="#handlePaste" />
           <Separator />
           <Button fx:id="addButton" text="Add variable" onAction="#onAddButtonClick"/>
           <Button fx:id="removeButton" text="Remove Variable" onAction="#onRemoveButtonClick"/>

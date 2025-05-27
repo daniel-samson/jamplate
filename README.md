@@ -1,7 +1,9 @@
-Jamplate
-====
+<div align="center">
+  <h1>Jamplate</h1>
+  <img src="assets/logo.svg" alt="Jamplates Logo" width="120" height="120">
+  <p>A document generator tool.</p>
+</div>
 
-A document generator tool.
 
 ## 📚 Documentation
 

@@ -23,6 +23,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -306,6 +308,17 @@ public class HelloController {
             }
         });
         
+        // Add listener for template editor selection changes to update clipboard button states
+        templateEditor.selectionProperty().addListener((observable, oldValue, newValue) -> {
+            // Update button states when selection changes in template editor
+            if (mainTabPane.getSelectionModel().getSelectedItem() != null &&
+                "Template".equals(mainTabPane.getSelectionModel().getSelectedItem().getText())) {
+                updateEditButtonStates(false);
+            }
+        });
+        
+
+        
         // Initialize recent projects manager
         recentProjectsManager = new RecentProjectsManager();
         
@@ -578,6 +591,7 @@ public class HelloController {
     private void updateEditButtonStates(boolean isVariablesTab) {
         boolean hasVariableSelection = !variableList.getSelectionModel().isEmpty();
         boolean hasTemplateSelection = templateEditor.getSelectedText().length() > 0;
+        boolean hasClipboardContent = Clipboard.getSystemClipboard().hasString();
         
         if (isVariablesTab) {
             // Disable cut, copy, paste buttons in Variables tab
@@ -588,11 +602,11 @@ public class HelloController {
             // Enable/disable variable-specific buttons based on selection
             removeButton.setDisable(!hasVariableSelection);
         } else {
-            // In Template tab, enable/disable based on text selection
+            // In Template tab, enable/disable based on text selection and clipboard content
             btnCut.setDisable(!hasTemplateSelection);
             btnCopy.setDisable(!hasTemplateSelection);
-            // Paste is always enabled in Template tab
-            btnPaste.setDisable(false);
+            // Paste is enabled only if clipboard has string content
+            btnPaste.setDisable(!hasClipboardContent);
         }
         
         // Update menu items to match button states
@@ -1081,6 +1095,70 @@ public class HelloController {
         }
     }
     
+    /**
+     * Handles the "Cut" action from menu or toolbar.
+     * Cuts the selected text from the template editor to the clipboard.
+     */
+    @FXML
+    private void handleCut() {
+        if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Template")) {
+            String selectedText = templateEditor.getSelectedText();
+            if (selectedText != null && !selectedText.isEmpty()) {
+                // Copy to clipboard
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                content.putString(selectedText);
+                clipboard.setContent(content);
+                
+                // Delete the selected text
+                templateEditor.deleteText(templateEditor.getSelection());
+                
+                // Update button states
+                updateEditButtonStates(false);
+            }
+        }
+    }
+    
+    /**
+     * Handles the "Copy" action from menu or toolbar.
+     * Copies the selected text from the template editor to the clipboard.
+     */
+    @FXML
+    private void handleCopy() {
+        if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Template")) {
+            String selectedText = templateEditor.getSelectedText();
+            if (selectedText != null && !selectedText.isEmpty()) {
+                // Copy to clipboard
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                content.putString(selectedText);
+                clipboard.setContent(content);
+            }
+        }
+    }
+    
+    /**
+     * Handles the "Paste" action from menu or toolbar.
+     * Pastes text from the clipboard into the template editor at the current cursor position.
+     */
+    @FXML
+    private void handlePaste() {
+        if (mainTabPane.getSelectionModel().getSelectedItem().getText().equals("Template")) {
+            Clipboard clipboard = Clipboard.getSystemClipboard();
+            if (clipboard.hasString()) {
+                String clipboardText = clipboard.getString();
+                if (clipboardText != null && !clipboardText.isEmpty()) {
+                    // Insert text at current caret position
+                    int caretPosition = templateEditor.getCaretPosition();
+                    templateEditor.insertText(caretPosition, clipboardText);
+                    
+                    // Update button states
+                    updateEditButtonStates(false);
+                }
+            }
+        }
+    }
+    
     @FXML
     private void handleAbout() {
         AboutDialog aboutDialog = new AboutDialog(menuAbout.getParentPopup().getOwnerWindow());
@@ -1273,7 +1351,9 @@ public class HelloController {
             
             // Add to recent projects
             if (recentProjectsManager != null) {
-                recentProjectsManager.addRecentProject(directory, projectFile.getProjectName());
+                // Use the project directory path instead of the parent directory
+                String projectDirectoryPath = projectFile.getProjectDirectoryPath();
+                recentProjectsManager.addRecentProject(projectDirectoryPath, projectFile.getProjectName());
                 updateRecentProjectsMenu();
             }
         } else {
@@ -1377,7 +1457,9 @@ public class HelloController {
                 
                 // Add to recent projects
                 if (recentProjectsManager != null) {
-                    recentProjectsManager.addRecentProject(directory, projectName);
+                    // Use the project directory path instead of the parent directory
+                    String projectDirectoryPath = projectFile.getProjectDirectoryPath();
+                    recentProjectsManager.addRecentProject(projectDirectoryPath, projectFile.getProjectName());
                     updateRecentProjectsMenu();
                 }
             } else {
@@ -1397,7 +1479,11 @@ public class HelloController {
             showErrorDialog(
                 "Error Creating Project", 
                 "Project Creation Failed", 
-                "Failed to create the project file. Please check if you have write permissions to the specified location."
+                "Failed to create the project file. This may be due to:\n" +
+                "• The specified directory path does not exist and could not be created\n" +
+                "• Insufficient write permissions to the specified location\n" +
+                "• Invalid characters in the project name or path\n\n" +
+                "Please check the console output for more detailed error information."
             );
             System.err.println("Failed to create project file.");
         }
