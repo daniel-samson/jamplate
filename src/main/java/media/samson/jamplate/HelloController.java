@@ -104,6 +104,9 @@ public class HelloController {
     // Recent projects manager
     private RecentProjectsManager recentProjectsManager;
     
+    // Preferences manager
+    private PreferencesManager preferencesManager;
+    
     // Context menu for autocomplete
     private ContextMenu autocompleteMenu;
 
@@ -326,6 +329,15 @@ public class HelloController {
         
         // Initialize recent projects manager
         recentProjectsManager = new RecentProjectsManager();
+        
+        // Initialize preferences manager
+        preferencesManager = new PreferencesManager();
+        
+        // Apply preferences to UI (this will also load CSS when scene is ready)
+        applyPreferencesToUI();
+        
+        // Apply initial programmatic styling to ensure components have proper backgrounds
+        applyProgrammaticStyling();
         
         // Update recent projects menu
         updateRecentProjectsMenu();
@@ -1173,11 +1185,175 @@ public class HelloController {
         PreferencesDialog preferencesDialog = new PreferencesDialog(owner);
         preferencesDialog.showAndWait().ifPresent(result -> {
             if (result == ButtonType.OK || result == ButtonType.APPLY) {
-                // Preferences were applied
+                // Preferences were applied, update UI
                 System.out.println("Preferences dialog closed with result: " + result);
-                // TODO: Apply any immediate UI changes based on preferences
+                applyPreferencesToUI();
             }
         });
+    }
+    
+    /**
+     * Applies current preferences to the UI components.
+     */
+    public void applyPreferencesToUI() {
+        if (preferencesManager == null) {
+            return;
+        }
+        
+        // Load theme CSS if not already loaded
+        loadThemeCSS();
+        
+        PreferencesManager.Preferences prefs = preferencesManager.getPreferences();
+        
+        // Apply editor preferences
+        if (templateEditor != null) {
+            // Apply word wrap setting
+            templateEditor.setWrapText(prefs.isWordWrapEnabled());
+            
+            // Apply font settings
+            String fontFamily = prefs.getFontFamily();
+            int fontSize = prefs.getFontSize();
+            
+            // Determine the effective editor theme based on application theme
+            Theme editorTheme = determineEditorThemeFromApplicationTheme(prefs.getApplicationTheme());
+            
+            if (editorTheme != null) {
+                String themeStyle = editorTheme.generateEditorStyle(fontFamily, fontSize);
+                templateEditor.setStyle(themeStyle);
+            } else {
+                // Fallback to basic font styling
+                String fontStyle = String.format("-fx-font-family: '%s'; -fx-font-size: %dpx;", fontFamily, fontSize);
+                templateEditor.setStyle(fontStyle);
+            }
+            
+            // Apply line numbers setting
+            if (prefs.isShowLineNumbers()) {
+                templateEditor.setParagraphGraphicFactory(LineNumberFactory.get(templateEditor));
+            } else {
+                templateEditor.setParagraphGraphicFactory(null);
+            }
+        }
+        
+        // Apply syntax highlighting setting
+        if (syntaxHighlighter != null) {
+            if (prefs.isSyntaxHighlightingEnabled()) {
+                syntaxHighlighter.initialize();
+                // Apply theme-specific syntax highlighting based on application theme
+                Theme effectiveTheme = determineEditorThemeFromApplicationTheme(prefs.getApplicationTheme());
+                applyThemeSyntaxHighlighting(effectiveTheme);
+            } else {
+                // Disable syntax highlighting by clearing styles
+                if (templateEditor != null) {
+                    templateEditor.clearStyle(0, templateEditor.getLength());
+                }
+            }
+        }
+        
+        System.out.println("Applied preferences to UI: " + prefs);
+        
+        // Apply programmatic styling as well to ensure proper backgrounds
+        applyProgrammaticStyling();
+    }
+    
+
+    
+    /**
+     * Determines the editor theme based on the application theme.
+     * The editor theme always follows the application theme for consistency.
+     * 
+     * @param applicationTheme The application theme
+     * @return The corresponding editor theme
+     */
+    private Theme determineEditorThemeFromApplicationTheme(ApplicationTheme applicationTheme) {
+        if (applicationTheme == null) {
+            applicationTheme = ApplicationTheme.SYSTEM;
+        }
+        
+        return switch (applicationTheme) {
+            case LIGHT -> Theme.LIGHT;
+            case DARK -> Theme.DARK;
+            case SYSTEM -> {
+                // Detect system theme and map to editor theme
+                ApplicationTheme detectedTheme = detectSystemApplicationTheme();
+                yield detectedTheme == ApplicationTheme.DARK ? Theme.DARK : Theme.LIGHT;
+            }
+        };
+    }
+    
+    /**
+     * Detects the system application theme using the same logic as ApplicationThemeManager.
+     * 
+     * @return The detected application theme
+     */
+    private ApplicationTheme detectSystemApplicationTheme() {
+        try {
+            String osName = System.getProperty("os.name").toLowerCase();
+            
+            if (osName.contains("mac")) {
+                return detectMacOSApplicationTheme();
+            } else if (osName.contains("win")) {
+                return detectWindowsApplicationTheme();
+            } else {
+                return ApplicationTheme.LIGHT;
+            }
+        } catch (Exception e) {
+            return ApplicationTheme.LIGHT;
+        }
+    }
+    
+    /**
+     * Detects macOS application theme.
+     * 
+     * @return The detected theme
+     */
+    private ApplicationTheme detectMacOSApplicationTheme() {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{
+                "osascript", "-e", 
+                "tell application \"System Events\" to tell appearance preferences to get dark mode"
+            });
+            
+            process.waitFor();
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream()));
+            String result = reader.readLine();
+            
+            if ("true".equals(result)) {
+                return ApplicationTheme.DARK;
+            } else {
+                return ApplicationTheme.LIGHT;
+            }
+        } catch (Exception e) {
+            return ApplicationTheme.LIGHT;
+        }
+    }
+    
+    /**
+     * Detects Windows application theme.
+     * 
+     * @return The detected theme
+     */
+    private ApplicationTheme detectWindowsApplicationTheme() {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{
+                "reg", "query", 
+                "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                "/v", "AppsUseLightTheme"
+            });
+            
+            process.waitFor();
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("AppsUseLightTheme") && line.contains("0x0")) {
+                    return ApplicationTheme.DARK;
+                }
+            }
+            return ApplicationTheme.LIGHT;
+        } catch (Exception e) {
+            return ApplicationTheme.LIGHT;
+        }
     }
     
     @FXML
@@ -1349,7 +1525,7 @@ public class HelloController {
      * 
      * @param directory The directory containing the project
      */
-    protected void loadProjectFromDirectory(String directory) {
+    public void loadProjectFromDirectory(String directory) {
         // Try to open project file from directory
         String projectFilePath = Paths.get(directory, "project.xml").toString();
         ProjectFile loadedProject = ProjectFile.open(projectFilePath);
@@ -2079,5 +2255,178 @@ public class HelloController {
                 "An error occurred while opening the project: " + e.getMessage()
             );
         }
+    }
+    
+    /**
+     * Loads the theme CSS file for syntax highlighting.
+     */
+    private void loadThemeCSS() {
+        try {
+            // Load the themes.css file
+            String cssPath = getClass().getResource("/themes.css").toExternalForm();
+            
+            if (templateEditor != null) {
+                if (templateEditor.getScene() != null) {
+                    // Check if CSS is already loaded
+                    if (!templateEditor.getScene().getStylesheets().contains(cssPath)) {
+                        templateEditor.getScene().getStylesheets().add(cssPath);
+                    }
+                } else {
+                    // If scene is not available yet, add a listener to load CSS when scene becomes available
+                    templateEditor.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                        if (newScene != null && !newScene.getStylesheets().contains(cssPath)) {
+                            newScene.getStylesheets().add(cssPath);
+                        }
+                    });
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to load theme CSS: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Applies theme-specific syntax highlighting to the template editor.
+     * 
+     * @param theme The theme to apply
+     */
+    private void applyThemeSyntaxHighlighting(Theme theme) {
+        if (templateEditor == null || theme == null) {
+            return;
+        }
+        
+        try {
+            // Remove existing theme classes
+            templateEditor.getStyleClass().removeIf(styleClass -> 
+                styleClass.endsWith("-syntax"));
+            
+            // Add the new theme class
+            String themeClass = theme.getSyntaxHighlightingClass();
+            templateEditor.getStyleClass().add(themeClass);
+            
+            // Force a re-highlight to apply the new colors
+            if (syntaxHighlighter != null) {
+                Platform.runLater(() -> syntaxHighlighter.highlightText());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Failed to apply theme syntax highlighting: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Loads and applies the application theme from preferences.
+     */
+    public void loadApplicationTheme() {
+        if (preferencesManager == null) {
+            return;
+        }
+        
+        try {
+            PreferencesManager.Preferences prefs = preferencesManager.getPreferences();
+            ApplicationTheme appTheme = prefs.getApplicationTheme();
+            
+            if (appTheme == null) {
+                appTheme = ApplicationTheme.SYSTEM;
+            }
+            
+            ApplicationThemeManager themeManager = ApplicationThemeManager.getInstance();
+            themeManager.setTheme(appTheme);
+            
+            System.out.println("Loaded application theme: " + appTheme);
+            
+        } catch (Exception e) {
+            System.err.println("Failed to load application theme: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Applies programmatic styling to ensure components have proper backgrounds.
+     * This is a fallback for cases where CSS might not be applied correctly.
+     */
+    private void applyProgrammaticStyling() {
+        if (preferencesManager == null) {
+            return;
+        }
+        
+        try {
+            PreferencesManager.Preferences prefs = preferencesManager.getPreferences();
+            ApplicationTheme appTheme = prefs.getApplicationTheme();
+            
+            if (appTheme == null) {
+                appTheme = ApplicationTheme.SYSTEM;
+            }
+            
+            // Determine if we should use dark styling
+            boolean useDarkStyling = shouldUseDarkStyling(appTheme);
+            
+            // Apply styling to components
+            Platform.runLater(() -> {
+                if (variableList != null) {
+                    String listBg = useDarkStyling ? "#3c3c3c" : "#ffffff";
+                    variableList.setStyle("-fx-background-color: " + listBg + ";");
+                }
+                
+                if (templateEditor != null) {
+                    String editorBg = useDarkStyling ? "#2b2b2b" : "#ffffff";
+                    String textColor = useDarkStyling ? "#d4d4d4" : "#000000";
+                    String currentStyle = templateEditor.getStyle();
+                    if (currentStyle == null) currentStyle = "";
+                    
+                    // Remove any existing background-color and text-fill styles
+                    currentStyle = currentStyle.replaceAll("-fx-background-color:[^;]*;?", "");
+                    currentStyle = currentStyle.replaceAll("-fx-text-fill:[^;]*;?", "");
+                    
+                    // Add new styling
+                    String newStyle = currentStyle + "; -fx-background-color: " + editorBg + "; -fx-text-fill: " + textColor + ";";
+                    templateEditor.setStyle(newStyle);
+                    
+                    // Also try to apply the text color to the content
+                    try {
+                        templateEditor.getStyleClass().removeIf(cls -> cls.equals("dark-text") || cls.equals("light-text"));
+                        templateEditor.getStyleClass().add(useDarkStyling ? "dark-text" : "light-text");
+                    } catch (Exception e) {
+                        // Ignore styling errors
+                    }
+                }
+                
+                if (previewWebView != null) {
+                    String webBg = useDarkStyling ? "#2b2b2b" : "#ffffff";
+                    previewWebView.setStyle("-fx-background-color: " + webBg + ";");
+                }
+                
+                // Apply to tab content areas
+                if (mainTabPane != null) {
+                    String tabBg = useDarkStyling ? "#2b2b2b" : "#ffffff";
+                    mainTabPane.getTabs().forEach(tab -> {
+                        if (tab.getContent() != null) {
+                            tab.getContent().setStyle("-fx-background-color: " + tabBg + ";");
+                        }
+                    });
+                }
+            });
+            
+        } catch (Exception e) {
+            System.err.println("Failed to apply programmatic styling: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Determines if dark styling should be used based on the application theme.
+     * 
+     * @param appTheme The application theme
+     * @return true if dark styling should be used
+     */
+    private boolean shouldUseDarkStyling(ApplicationTheme appTheme) {
+        if (appTheme == ApplicationTheme.DARK) {
+            return true;
+        } else if (appTheme == ApplicationTheme.LIGHT) {
+            return false;
+        } else if (appTheme == ApplicationTheme.SYSTEM) {
+            // Detect system theme
+            ApplicationTheme detectedTheme = detectSystemApplicationTheme();
+            return detectedTheme == ApplicationTheme.DARK;
+        }
+        return false;
     }
 }

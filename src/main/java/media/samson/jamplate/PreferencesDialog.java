@@ -22,9 +22,12 @@ public class PreferencesDialog extends Dialog<ButtonType> {
     // Editor preferences
     private Spinner<Integer> fontSizeSpinner;
     private ComboBox<String> fontFamilyComboBox;
-    private ComboBox<String> themeComboBox;
+
     private CheckBox enableSyntaxHighlightingCheckBox;
     private CheckBox showWhitespaceCheckBox;
+    
+    // Application theme
+    private ComboBox<ApplicationTheme> applicationThemeComboBox;
     
     // File preferences
     private TextField defaultProjectLocationField;
@@ -37,11 +40,19 @@ public class PreferencesDialog extends Dialog<ButtonType> {
     private CheckBox openExportFolderAfterExportCheckBox;
     private CheckBox overwriteExistingFilesCheckBox;
     
+    // Preferences manager
+    private PreferencesManager preferencesManager;
+    
+
+    
     public PreferencesDialog(Window owner) {
         initOwner(owner);
         initModality(Modality.WINDOW_MODAL);
         setTitle("Preferences");
         setHeaderText("Configure Jamplate Settings");
+        
+        // Initialize preferences manager
+        preferencesManager = new PreferencesManager();
         
         // Create dialog buttons
         getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL, ButtonType.APPLY);
@@ -119,6 +130,15 @@ public class PreferencesDialog extends Dialog<ButtonType> {
         grid.add(wordWrapCheckBox, 0, row, 2, 1);
         row++;
         
+        // Application theme
+        Label applicationThemeLabel = new Label("Application theme:");
+        applicationThemeComboBox = new ComboBox<>();
+        applicationThemeComboBox.getItems().addAll(ApplicationTheme.values());
+        applicationThemeComboBox.setValue(ApplicationTheme.SYSTEM);
+        applicationThemeComboBox.setMaxWidth(Double.MAX_VALUE);
+        grid.add(applicationThemeLabel, 0, row);
+        grid.add(applicationThemeComboBox, 1, row++);
+        
         tab.setContent(grid);
         return tab;
     }
@@ -151,13 +171,7 @@ public class PreferencesDialog extends Dialog<ButtonType> {
         grid.add(fontSizeLabel, 0, row);
         grid.add(fontSizeSpinner, 1, row++);
         
-        // Theme settings
-        Label themeLabel = new Label("Theme:");
-        themeComboBox = new ComboBox<>();
-        themeComboBox.getItems().addAll("Light", "Dark", "System");
-        themeComboBox.setValue("System");
-        grid.add(themeLabel, 0, row);
-        grid.add(themeComboBox, 1, row++);
+
         
         // Syntax highlighting
         enableSyntaxHighlightingCheckBox = new CheckBox("Enable syntax highlighting");
@@ -301,55 +315,99 @@ public class PreferencesDialog extends Dialog<ButtonType> {
     }
     
     private void loadPreferences() {
-        // TODO: Load preferences from PreferencesManager
-        // For now, set default values
+        // Load preferences from PreferencesManager
+        PreferencesManager.Preferences prefs = preferencesManager.getPreferences();
         
         // General preferences
-        autoSaveCheckBox.setSelected(false);
-        autoSaveIntervalSpinner.getValueFactory().setValue(5);
-        showLineNumbersCheckBox.setSelected(true);
-        wordWrapCheckBox.setSelected(true);
+        autoSaveCheckBox.setSelected(prefs.isAutoSaveEnabled());
+        autoSaveIntervalSpinner.getValueFactory().setValue(prefs.getAutoSaveInterval());
+        showLineNumbersCheckBox.setSelected(prefs.isShowLineNumbers());
+        wordWrapCheckBox.setSelected(prefs.isWordWrapEnabled());
+        applicationThemeComboBox.setValue(prefs.getApplicationTheme() != null ? prefs.getApplicationTheme() : ApplicationTheme.SYSTEM);
         
         // Editor preferences
-        fontSizeSpinner.getValueFactory().setValue(12);
-        fontFamilyComboBox.setValue("Consolas");
-        themeComboBox.setValue("System");
-        enableSyntaxHighlightingCheckBox.setSelected(true);
-        showWhitespaceCheckBox.setSelected(false);
+        fontSizeSpinner.getValueFactory().setValue(prefs.getFontSize());
+        fontFamilyComboBox.setValue(prefs.getFontFamily());
+        enableSyntaxHighlightingCheckBox.setSelected(prefs.isSyntaxHighlightingEnabled());
+        showWhitespaceCheckBox.setSelected(prefs.isShowWhitespace());
         
         // File preferences
-        defaultProjectLocationField.setText(System.getProperty("user.home"));
-        defaultTemplateTypeComboBox.setValue(TemplateFileType.HTML_FILE);
-        createBackupFilesCheckBox.setSelected(false);
-        maxRecentProjectsSpinner.getValueFactory().setValue(10);
+        defaultProjectLocationField.setText(prefs.getDefaultProjectLocation());
+        defaultTemplateTypeComboBox.setValue(prefs.getDefaultTemplateType());
+        createBackupFilesCheckBox.setSelected(prefs.isCreateBackupFiles());
+        maxRecentProjectsSpinner.getValueFactory().setValue(prefs.getMaxRecentProjects());
         
         // Export preferences
-        defaultExportLocationField.setText(System.getProperty("user.home"));
-        openExportFolderAfterExportCheckBox.setSelected(true);
-        overwriteExistingFilesCheckBox.setSelected(false);
+        defaultExportLocationField.setText(prefs.getDefaultExportLocation());
+        openExportFolderAfterExportCheckBox.setSelected(prefs.isOpenExportFolderAfterExport());
+        overwriteExistingFilesCheckBox.setSelected(prefs.isOverwriteExistingFiles());
     }
     
     private void applyPreferences() {
-        // TODO: Save preferences using PreferencesManager
-        // For now, just print the values (will be implemented with PreferencesManager)
+        // Save preferences normally (no restart needed for application theme)
+        preferencesManager.updateFromDialog(this);
+        boolean saved = preferencesManager.savePreferences();
         
-        System.out.println("Applying preferences:");
-        System.out.println("Auto-save: " + autoSaveCheckBox.isSelected());
-        System.out.println("Auto-save interval: " + autoSaveIntervalSpinner.getValue());
-        System.out.println("Show line numbers: " + showLineNumbersCheckBox.isSelected());
-        System.out.println("Word wrap: " + wordWrapCheckBox.isSelected());
-        System.out.println("Font family: " + fontFamilyComboBox.getValue());
-        System.out.println("Font size: " + fontSizeSpinner.getValue());
-        System.out.println("Theme: " + themeComboBox.getValue());
-        System.out.println("Syntax highlighting: " + enableSyntaxHighlightingCheckBox.isSelected());
-        System.out.println("Show whitespace: " + showWhitespaceCheckBox.isSelected());
-        System.out.println("Default project location: " + defaultProjectLocationField.getText());
-        System.out.println("Default template type: " + defaultTemplateTypeComboBox.getValue());
-        System.out.println("Create backups: " + createBackupFilesCheckBox.isSelected());
-        System.out.println("Max recent projects: " + maxRecentProjectsSpinner.getValue());
-        System.out.println("Default export location: " + defaultExportLocationField.getText());
-        System.out.println("Open export folder: " + openExportFolderAfterExportCheckBox.isSelected());
-        System.out.println("Overwrite files: " + overwriteExistingFilesCheckBox.isSelected());
+        if (saved) {
+            System.out.println("Preferences applied and saved successfully");
+            
+            // Apply application theme immediately
+            ApplicationTheme newAppTheme = applicationThemeComboBox.getValue();
+            if (newAppTheme != null) {
+                ApplicationThemeManager themeManager = ApplicationThemeManager.getInstance();
+                themeManager.setTheme(newAppTheme);
+            }
+            
+            // Apply all preferences to the main controller (including editor theme updates)
+            try {
+                HelloController controller = HelloApplication.getController();
+                if (controller != null) {
+                    controller.applyPreferencesToUI();
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to apply preferences to UI: " + e.getMessage());
+            }
+            
+        } else {
+            System.err.println("Failed to save preferences");
+        }
+    }
+    
+    /**
+     * Resets the form to the previously saved values when user declines restart.
+     * This ensures the UI reflects the actual saved state.
+     */
+    private void resetFormToSavedValues() {
+        // Reload preferences from the saved state (not from the current form values)
+        PreferencesManager.Preferences savedPrefs = preferencesManager.getPreferences();
+        
+        // Reset all form fields to the saved values
+        // General preferences
+        autoSaveCheckBox.setSelected(savedPrefs.isAutoSaveEnabled());
+        autoSaveIntervalSpinner.getValueFactory().setValue(savedPrefs.getAutoSaveInterval());
+        showLineNumbersCheckBox.setSelected(savedPrefs.isShowLineNumbers());
+        wordWrapCheckBox.setSelected(savedPrefs.isWordWrapEnabled());
+        applicationThemeComboBox.setValue(savedPrefs.getApplicationTheme() != null ? savedPrefs.getApplicationTheme() : ApplicationTheme.SYSTEM);
+        
+        // Editor preferences
+        fontSizeSpinner.getValueFactory().setValue(savedPrefs.getFontSize());
+        fontFamilyComboBox.setValue(savedPrefs.getFontFamily());
+
+        enableSyntaxHighlightingCheckBox.setSelected(savedPrefs.isSyntaxHighlightingEnabled());
+        showWhitespaceCheckBox.setSelected(savedPrefs.isShowWhitespace());
+        
+        // File preferences
+        defaultProjectLocationField.setText(savedPrefs.getDefaultProjectLocation());
+        defaultTemplateTypeComboBox.setValue(savedPrefs.getDefaultTemplateType());
+        createBackupFilesCheckBox.setSelected(savedPrefs.isCreateBackupFiles());
+        maxRecentProjectsSpinner.getValueFactory().setValue(savedPrefs.getMaxRecentProjects());
+        
+        // Export preferences
+        defaultExportLocationField.setText(savedPrefs.getDefaultExportLocation());
+        openExportFolderAfterExportCheckBox.setSelected(savedPrefs.isOpenExportFolderAfterExport());
+        overwriteExistingFilesCheckBox.setSelected(savedPrefs.isOverwriteExistingFiles());
+        
+        System.out.println("Form reset to previously saved values");
     }
     
     // Getters for accessing preference values (will be used by PreferencesManager)
@@ -378,9 +436,7 @@ public class PreferencesDialog extends Dialog<ButtonType> {
         return fontSizeSpinner.getValue();
     }
     
-    public String getTheme() {
-        return themeComboBox.getValue();
-    }
+
     
     public boolean isSyntaxHighlightingEnabled() {
         return enableSyntaxHighlightingCheckBox.isSelected();
@@ -416,5 +472,9 @@ public class PreferencesDialog extends Dialog<ButtonType> {
     
     public boolean isOverwriteExistingFiles() {
         return overwriteExistingFilesCheckBox.isSelected();
+    }
+    
+    public ApplicationTheme getApplicationTheme() {
+        return applicationThemeComboBox.getValue();
     }
 } 

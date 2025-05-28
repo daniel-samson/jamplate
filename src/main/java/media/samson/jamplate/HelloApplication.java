@@ -59,6 +59,16 @@ public class HelloApplication extends Application {
         stage.centerOnScreen();
         
         stage.setScene(scene);
+        
+        // Register the scene with the theme manager and apply initial theme
+        ApplicationThemeManager themeManager = ApplicationThemeManager.getInstance();
+        themeManager.registerScene(scene);
+        
+        // Load application theme from preferences
+        if (controller != null) {
+            controller.loadApplicationTheme();
+        }
+        
         stage.show();
         
         // Force the stage to the front and request focus (especially important on macOS)
@@ -72,6 +82,9 @@ public class HelloApplication extends Application {
                 stage.setAlwaysOnTop(true);
                 Platform.runLater(() -> stage.setAlwaysOnTop(false));
             }
+            
+            // Check if we need to reopen a project after restart
+            checkAndHandleRestart();
         });
     }
     
@@ -82,6 +95,24 @@ public class HelloApplication extends Application {
      */
     public static HelloController getController() {
         return controller;
+    }
+    
+    /**
+     * Checks if the application was restarted and reopens the last project if needed.
+     */
+    private void checkAndHandleRestart() {
+        String projectPath = ApplicationRestarter.checkRestartState();
+        if (projectPath != null && controller != null) {
+            // Reopen the project that was open before restart
+            Platform.runLater(() -> {
+                try {
+                    controller.loadProjectFromDirectory(projectPath);
+                    System.out.println("Reopened project after restart: " + projectPath);
+                } catch (Exception e) {
+                    System.err.println("Failed to reopen project after restart: " + e.getMessage());
+                }
+            });
+        }
     }
 
     public static void main(String[] args) {

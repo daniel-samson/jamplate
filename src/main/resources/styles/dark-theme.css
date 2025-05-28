@@ -1,0 +1,523 @@
+/* Dark Theme for Jamplate Application */
+
+/* Root styling */
+.root {
+    -fx-base: #3c3c3c;
+    -fx-background: #2b2b2b;
+    -fx-control-inner-background: #3c3c3c;
+    -fx-control-inner-background-alt: #404040;
+    -fx-accent: #0078d4;
+    -fx-default-button: #0078d4;
+    -fx-focus-color: #0078d4;
+    -fx-faint-focus-color: #0078d422;
+    -fx-text-fill: #ffffff;
+    -fx-text-base-color: #ffffff;
+}
+
+/* Menu Bar */
+.menu-bar {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #404040;
+    -fx-border-width: 0 0 1 0;
+}
+
+.menu-bar .menu .label {
+    -fx-text-fill: #ffffff;
+}
+
+.menu-bar .menu:hover {
+    -fx-background-color: #404040;
+}
+
+.menu-bar .menu:showing {
+    -fx-background-color: #505050;
+}
+
+/* Context Menu */
+.context-menu {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 8, 0, 0, 2);
+}
+
+.menu-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+}
+
+.menu-item:focused {
+    -fx-background-color: #0078d4;
+    -fx-text-fill: #ffffff;
+}
+
+.menu-item:hover {
+    -fx-background-color: #0078d4;
+}
+
+/* Tool Bar */
+.tool-bar {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #404040;
+    -fx-border-width: 0 0 1 0;
+}
+
+.tool-bar .button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #ffffff;
+}
+
+.tool-bar .button:hover {
+    -fx-background-color: #404040;
+    -fx-border-color: #555555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.tool-bar .button:pressed {
+    -fx-background-color: #505050;
+}
+
+/* Tab Pane */
+.tab-pane {
+    -fx-tab-min-width: 100;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #404040;
+    -fx-border-width: 0 0 1 0;
+}
+
+.tab-pane .tab {
+    -fx-background-color: #404040;
+    -fx-border-color: #555555;
+    -fx-border-width: 1 1 0 1;
+    -fx-border-radius: 4 4 0 0;
+    -fx-background-radius: 4 4 0 0;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: #cccccc;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #ffffff;
+}
+
+/* List View - Base styling */
+.list-view {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+}
+
+.list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: transparent;
+}
+
+.list-view .list-cell:selected {
+    -fx-background-color: #0078d4;
+    -fx-text-fill: #ffffff;
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #505050;
+}
+
+/* ListView viewport and virtual flow */
+.list-view .virtual-flow {
+    -fx-background-color: #3c3c3c;
+}
+
+.list-view .virtual-flow .viewport {
+    -fx-background-color: #3c3c3c;
+}
+
+/* Text Field */
+.text-field {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-text-fill: #ffffff;
+}
+
+.text-field:focused {
+    -fx-border-color: #0078d4;
+    -fx-border-width: 2;
+}
+
+/* Combo Box */
+.combo-box {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.combo-box:focused {
+    -fx-border-color: #0078d4;
+    -fx-border-width: 2;
+}
+
+.combo-box .list-view {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 8, 0, 0, 2);
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: #3c3c3c;
+}
+
+.combo-box .arrow {
+    -fx-background-color: #ffffff;
+}
+
+/* Button */
+.button {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-text-fill: #ffffff;
+}
+
+.button:hover {
+    -fx-background-color: #505050;
+    -fx-border-color: #777777;
+}
+
+.button:pressed {
+    -fx-background-color: #606060;
+}
+
+.button:default {
+    -fx-background-color: #0078d4;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #0078d4;
+}
+
+.button:default:hover {
+    -fx-background-color: #106ebe;
+}
+
+/* Check Box */
+.check-box {
+    -fx-text-fill: #ffffff;
+}
+
+.check-box .box {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #0078d4;
+}
+
+/* Spinner */
+.spinner {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.spinner .text-field {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+}
+
+.spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: #3c3c3c;
+}
+
+.spinner .increment-arrow,
+.spinner .decrement-arrow {
+    -fx-background-color: #ffffff;
+}
+
+/* Scroll Bar */
+.scroll-bar {
+    -fx-background-color: #2d2d2d;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #555555;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #777777;
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: #999999;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: #2d2d2d;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-background-color: #ffffff;
+}
+
+/* Fix for scroll bar arrow styling issues */
+.scroll-bar:vertical .increment-button .increment-arrow,
+.scroll-bar:vertical .decrement-button .decrement-arrow,
+.scroll-bar:horizontal .increment-button .increment-arrow,
+.scroll-bar:horizontal .decrement-button .decrement-arrow {
+    -fx-background-color: #ffffff;
+    -fx-shape: null;
+}
+
+/* Dialog */
+.dialog-pane {
+    -fx-background-color: #3c3c3c;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #404040;
+    -fx-border-width: 0 0 1 0;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: #ffffff;
+}
+
+.dialog-pane .content {
+    -fx-background-color: #3c3c3c;
+}
+
+.dialog-pane .button-bar {
+    -fx-background-color: #3c3c3c;
+}
+
+/* Status Bar */
+.status-bar {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #404040;
+    -fx-border-width: 1 0 0 0;
+    -fx-text-fill: #cccccc;
+}
+
+/* Code Area (RichTextFX) - Base styling */
+.code-area {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+}
+
+.code-area .paragraph-box:has-caret {
+    -fx-background-color: #3a3a3a;
+}
+
+/* CodeArea viewport and virtual flow */
+.code-area .virtual-flow {
+    -fx-background-color: #2b2b2b;
+}
+
+.code-area .virtual-flow .viewport {
+    -fx-background-color: #2b2b2b;
+}
+
+/* Line numbers - Multiple selectors for RichTextFX */
+.lineno,
+.line-number,
+.paragraph-graphic,
+.code-area .paragraph-graphic,
+.code-area .lineno {
+    -fx-background-color: #1e1e1e !important;
+    -fx-text-fill: #666666 !important;
+    -fx-border-color: #404040;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* More specific selectors for line number factory */
+.code-area > .virtual-flow > .clipped-container > .sheet > .paragraph-box > .paragraph-graphic {
+    -fx-background-color: #1e1e1e !important;
+    -fx-text-fill: #666666 !important;
+}
+
+/* Line number text styling */
+.code-area .paragraph-graphic .text {
+    -fx-fill: #666666 !important;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #ffffff;
+}
+
+/* Separator */
+.separator .line {
+    -fx-border-color: #555555;
+}
+
+/* Progress Bar */
+.progress-bar {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+}
+
+.progress-bar .bar {
+    -fx-background-color: #0078d4;
+}
+
+/* Table View */
+.table-view {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+}
+
+.table-view .column-header {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #555555;
+    -fx-text-fill: #ffffff;
+}
+
+.table-view .table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #555555;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #0078d4;
+}
+
+/* Tree View */
+.tree-view {
+    -fx-background-color: #3c3c3c;
+    -fx-border-color: #555555;
+}
+
+.tree-view .tree-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+}
+
+.tree-view .tree-cell:selected {
+    -fx-background-color: #0078d4;
+}
+
+/* WebView */
+.web-view {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+}
+
+/* Tab Content Areas */
+.tab-pane .tab-content-area {
+    -fx-background-color: #2b2b2b;
+}
+
+/* VBox containers (used in tab content) */
+.vbox {
+    -fx-background-color: #2b2b2b;
+}
+
+/* HBox containers */
+.hbox {
+    -fx-background-color: #2b2b2b;
+}
+
+/* BorderPane */
+.border-pane {
+    -fx-background-color: #2b2b2b;
+}
+
+/* Split Pane */
+.split-pane {
+    -fx-background-color: #2b2b2b;
+}
+
+.split-pane .split-pane-divider {
+    -fx-background-color: #555555;
+}
+
+/* Ensure CodeArea has proper dark styling */
+.code-area {
+    -fx-background-color: #2b2b2b !important;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+    -fx-text-fill: #d4d4d4 !important;
+}
+
+.code-area .content {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #d4d4d4;
+}
+
+.code-area .styled-text-area {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #d4d4d4;
+}
+
+.code-area .styled-text-area .text {
+    -fx-fill: #d4d4d4 !important;
+}
+
+.code-area .text {
+    -fx-fill: #d4d4d4 !important;
+}
+
+/* More specific text styling for CodeArea */
+.code-area > .virtual-flow > .clipped-container > .sheet > .text {
+    -fx-fill: #d4d4d4 !important;
+}
+
+/* Text color classes for programmatic styling */
+.dark-text {
+    -fx-text-fill: #d4d4d4 !important;
+}
+
+.dark-text .text {
+    -fx-fill: #d4d4d4 !important;
+}
+
+/* ListView specific styling */
+.list-view {
+    -fx-background-color: #3c3c3c !important;
+    -fx-border-color: #555555;
+    -fx-border-width: 1;
+}
+
+.list-view .virtual-flow .clipped-container .sheet .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+}
+
+.list-view .virtual-flow .clipped-container .sheet .list-cell:selected {
+    -fx-background-color: #0078d4;
+    -fx-text-fill: #ffffff;
+}
+
+.list-view .virtual-flow .clipped-container .sheet .list-cell:hover {
+    -fx-background-color: #505050;
+} 

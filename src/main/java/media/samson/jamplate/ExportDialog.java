@@ -68,8 +68,19 @@ public class ExportDialog extends Dialog<ExportDialog.ExportSettings> {
         // Add file path autocompletion for CSV files
         FilePathAutoComplete csvAutoComplete = FilePathAutoComplete.forFiles(csvFileField);
         
-        // Set default CSV file location to home directory
-        csvFileField.setText(System.getProperty("user.home") + File.separator);
+        // Set default CSV file location from preferences
+        try {
+            PreferencesManager preferencesManager = new PreferencesManager();
+            String defaultLocation = preferencesManager.getPreferences().getDefaultExportLocation();
+            if (defaultLocation != null && !defaultLocation.trim().isEmpty()) {
+                csvFileField.setText(defaultLocation + File.separator);
+            } else {
+                csvFileField.setText(System.getProperty("user.home") + File.separator);
+            }
+        } catch (Exception e) {
+            // Fallback to user home if preferences fail
+            csvFileField.setText(System.getProperty("user.home") + File.separator);
+        }
         
         // CSV Browse button
         csvBrowseButton = new Button("Browse...");
@@ -142,8 +153,19 @@ public class ExportDialog extends Dialog<ExportDialog.ExportSettings> {
             return null;
         });
         
-        // Set a default directory
-        directoryField.setText(System.getProperty("user.home"));
+        // Set default export directory from preferences
+        try {
+            PreferencesManager preferencesManager = new PreferencesManager();
+            String defaultLocation = preferencesManager.getPreferences().getDefaultExportLocation();
+            if (defaultLocation != null && !defaultLocation.trim().isEmpty()) {
+                directoryField.setText(defaultLocation);
+            } else {
+                directoryField.setText(System.getProperty("user.home"));
+            }
+        } catch (Exception e) {
+            // Fallback to user home if preferences fail
+            directoryField.setText(System.getProperty("user.home"));
+        }
     }
     
     /**

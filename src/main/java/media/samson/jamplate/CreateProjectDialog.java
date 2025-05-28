@@ -141,6 +141,20 @@ public class CreateProjectDialog extends Dialog<CreateProjectDialog.ProjectCreat
             }
         });
         
+        // Set default directory from preferences
+        try {
+            PreferencesManager preferencesManager = new PreferencesManager();
+            String defaultLocation = preferencesManager.getPreferences().getDefaultProjectLocation();
+            if (defaultLocation != null && !defaultLocation.trim().isEmpty()) {
+                directoryField.setText(defaultLocation);
+            } else {
+                directoryField.setText(System.getProperty("user.home"));
+            }
+        } catch (Exception e) {
+            // Fallback to user home if preferences fail
+            directoryField.setText(System.getProperty("user.home"));
+        }
+        
         // Add file path autocompletion for directories
         FilePathAutoComplete.forDirectories(directoryField);
         
@@ -149,7 +163,17 @@ public class CreateProjectDialog extends Dialog<CreateProjectDialog.ProjectCreat
         templateTypeComboBox.setPromptText("Select Template Type");
         templateTypeComboBox.setId("templateTypeComboBox");
         templateTypeComboBox.getItems().addAll(TemplateFileType.values());
-        templateTypeComboBox.setValue(TemplateFileType.TXT_FILE); // Set default
+        
+        // Set default template type from preferences
+        try {
+            PreferencesManager preferencesManager = new PreferencesManager();
+            TemplateFileType defaultType = preferencesManager.getPreferences().getDefaultTemplateType();
+            templateTypeComboBox.setValue(defaultType != null ? defaultType : TemplateFileType.HTML_FILE);
+        } catch (Exception e) {
+            // Fallback to HTML if preferences fail
+            templateTypeComboBox.setValue(TemplateFileType.HTML_FILE);
+        }
+        
         templateTypeComboBox.setMaxWidth(Double.MAX_VALUE);
         
         // Browse button
