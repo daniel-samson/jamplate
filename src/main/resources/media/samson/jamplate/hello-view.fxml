@@ -36,6 +36,8 @@
               <MenuItem fx:id="menuCut" text="Cu_t" accelerator="shortcut+X" onAction="#handleCut" />
               <MenuItem fx:id="menuCopy" text="_Copy" accelerator="shortcut+C" onAction="#handleCopy" />
               <MenuItem fx:id="menuPaste" text="_Paste" accelerator="shortcut+V" onAction="#handlePaste" />
+              <SeparatorMenuItem />
+              <MenuItem fx:id="menuPreferences" text="_Preferences..." accelerator="shortcut+comma" onAction="#handlePreferences" />
             </items>
           </Menu>
 

@@ -87,6 +87,7 @@ public class HelloController {
     @FXML private MenuItem menuPaste;
     @FXML private MenuItem menuUndo;
     @FXML private MenuItem menuRedo;
+    @FXML private MenuItem menuPreferences;
     @FXML private MenuItem menuAbout;
     @FXML private CheckMenuItem menuShowToolbar;
     @FXML private CheckMenuItem menuShowStatusBar;
@@ -138,6 +139,9 @@ public class HelloController {
         addButton.setGraphic(addGlyph);
         removeButton.setGraphic(removeGlyph);
         
+        // Create preferences glyph
+        Glyph menuPreferencesGlyph = fontAwesome.create(FontAwesome.Glyph.COG).size(16).color(Color.GRAY);
+        
         // Set menu item icons with light-colored glyphs for better visibility in dark themes
         menuNew.setGraphic(menuFileGlyph);
         menuOpen.setGraphic(menuFolderOpenGlyph);
@@ -145,6 +149,7 @@ public class HelloController {
         menuCut.setGraphic(menuCutGlyph);
         menuCopy.setGraphic(menuCopyGlyph);
         menuPaste.setGraphic(menuPasteGlyph);
+        menuPreferences.setGraphic(menuPreferencesGlyph);
 
         // Set tooltips with platform-specific keyboard shortcuts
         String ctrlKey = getPlatformSpecificCtrlKey();
@@ -1157,6 +1162,22 @@ public class HelloController {
                 }
             }
         }
+    }
+    
+    @FXML
+    private void handlePreferences() {
+        // Get the owner window
+        Window owner = menuPreferences.getParentPopup().getOwnerWindow();
+        
+        // Create and show the preferences dialog
+        PreferencesDialog preferencesDialog = new PreferencesDialog(owner);
+        preferencesDialog.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK || result == ButtonType.APPLY) {
+                // Preferences were applied
+                System.out.println("Preferences dialog closed with result: " + result);
+                // TODO: Apply any immediate UI changes based on preferences
+            }
+        });
     }
     
     @FXML
