@@ -2259,8 +2259,12 @@ public class HelloController {
     
     /**
      * Loads the theme CSS file for syntax highlighting.
+     * NOTE: This method is disabled as syntax highlighting CSS is now included 
+     * directly in the theme-specific CSS files (light-theme.css, dark-theme.css).
      */
     private void loadThemeCSS() {
+        // No longer needed - syntax highlighting CSS is included in theme files
+        /*
         try {
             // Load the themes.css file
             String cssPath = getClass().getResource("/themes.css").toExternalForm();
@@ -2283,6 +2287,7 @@ public class HelloController {
         } catch (Exception e) {
             System.err.println("Failed to load theme CSS: " + e.getMessage());
         }
+        */
     }
     
     /**

@@ -401,4 +401,54 @@
 
 .list-view .virtual-flow .clipped-container .sheet .list-cell:hover {
     -fx-background-color: #f5f5f5;
-} 
+}
+
+/* ===== SYNTAX HIGHLIGHTING FOR LIGHT THEME ===== */
+
+/* Template Editor Syntax Highlighting */
+.light-syntax .keyword { -fx-text-fill: #0000ff; }
+.light-syntax .string { -fx-text-fill: #008000; }
+.light-syntax .comment { -fx-text-fill: #808080; }
+.light-syntax .number { -fx-text-fill: #800080; }
+.light-syntax .operator { -fx-text-fill: #000080; }
+.light-syntax .function { -fx-text-fill: #ff0000; }
+.light-syntax .bracket { -fx-text-fill: #0066cc; }
+.light-syntax .attribute { -fx-text-fill: #7d4b7d; }
+.light-syntax .variable { -fx-text-fill: #008080; }
+.light-syntax .template-variable { -fx-text-fill: #c71585; -fx-font-weight: bold; }
+
+/* Direct syntax highlighting without theme prefix (fallback) */
+.keyword { -fx-text-fill: #0000ff; }
+.string { -fx-text-fill: #008000; }
+.comment { -fx-text-fill: #808080; }
+.number { -fx-text-fill: #800080; }
+.operator { -fx-text-fill: #000080; }
+.function { -fx-text-fill: #ff0000; }
+.bracket { -fx-text-fill: #0066cc; }
+.attribute { -fx-text-fill: #7d4b7d; }
+.variable { -fx-text-fill: #008080; }
+.template-variable { -fx-text-fill: #c71585; -fx-font-weight: bold; }
+
+/* More specific selectors for CodeArea syntax highlighting */
+.code-area .keyword { -fx-fill: #0000ff !important; }
+.code-area .string { -fx-fill: #008000 !important; }
+.code-area .comment { -fx-fill: #808080 !important; }
+.code-area .number { -fx-fill: #800080 !important; }
+.code-area .operator { -fx-fill: #000080 !important; }
+.code-area .function { -fx-fill: #ff0000 !important; }
+.code-area .bracket { -fx-fill: #0066cc !important; }
+.code-area .attribute { -fx-fill: #7d4b7d !important; }
+.code-area .variable { -fx-fill: #008080 !important; }
+.code-area .template-variable { -fx-fill: #c71585 !important; -fx-font-weight: bold; }
+
+/* Text elements inside CodeArea */
+.code-area .text.keyword { -fx-fill: #0000ff !important; }
+.code-area .text.string { -fx-fill: #008000 !important; }
+.code-area .text.comment { -fx-fill: #808080 !important; }
+.code-area .text.number { -fx-fill: #800080 !important; }
+.code-area .text.operator { -fx-fill: #000080 !important; }
+.code-area .text.function { -fx-fill: #ff0000 !important; }
+.code-area .text.bracket { -fx-fill: #0066cc !important; }
+.code-area .text.attribute { -fx-fill: #7d4b7d !important; }
+.code-area .text.variable { -fx-fill: #008080 !important; }
+.code-area .text.template-variable { -fx-fill: #c71585 !important; -fx-font-weight: bold; } 

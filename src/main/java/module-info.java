@@ -9,6 +9,7 @@ module media.samson.jamplate {
     // Rich text editor dependencies
     requires org.fxmisc.richtext;
     requires static org.fxmisc.flowless;
+    requires static reactfx;
     
     // XML and CSV handling
     requires jakarta.xml.bind;

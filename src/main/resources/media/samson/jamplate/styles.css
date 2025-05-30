@@ -46,50 +46,50 @@
     -fx-border-width: 0 1px 0 0;
 }
 
-/* Basic syntax highlighting preparations */
+/* Basic syntax highlighting preparations - Fixed to use -fx-text-fill */
 .keyword {
-    -fx-fill: #0000FF;
+    -fx-text-fill: #0000FF;
     -fx-font-weight: bold;
 }
 
 .string {
-    -fx-fill: #008000;
+    -fx-text-fill: #008000;
     -fx-font-style: italic;
 }
 
 .comment {
-    -fx-fill: #808080;
+    -fx-text-fill: #808080;
     -fx-font-style: italic;
 }
 
 .number {
-    -fx-fill: #1E90FF;
+    -fx-text-fill: #1E90FF;
     -fx-font-weight: bold;
 }
 
 .bracket {
-    -fx-fill: #0066CC;
+    -fx-text-fill: #0066CC;
     -fx-font-weight: bold;
 }
 
 .operator {
-    -fx-fill: #FF4500;
+    -fx-text-fill: #FF4500;
     -fx-font-weight: bold;
 }
 
-/* HTML and PHP specific styles */
+/* HTML and PHP specific styles - Fixed to use -fx-text-fill */
 .attribute {
-    -fx-fill: #7D4B7D;
+    -fx-text-fill: #7D4B7D;
     -fx-font-weight: bold;
 }
 
 .variable {
-    -fx-fill: #008080;
+    -fx-text-fill: #008080;
     -fx-font-weight: bold;
 }
 
 .template-variable {
-    -fx-fill: #C71585;
+    -fx-text-fill: #C71585;
     -fx-font-weight: bold;
     -fx-background-color: #FFF0F5;
 }

@@ -520,4 +520,54 @@
 
 .list-view .virtual-flow .clipped-container .sheet .list-cell:hover {
     -fx-background-color: #505050;
-} 
+}
+
+/* ===== SYNTAX HIGHLIGHTING FOR DARK THEME ===== */
+
+/* Template Editor Syntax Highlighting */
+.dark-syntax .keyword { -fx-text-fill: #6897bb; }
+.dark-syntax .string { -fx-text-fill: #6a8759; }
+.dark-syntax .comment { -fx-text-fill: #808080; }
+.dark-syntax .number { -fx-text-fill: #9876aa; }
+.dark-syntax .operator { -fx-text-fill: #ffc66d; }
+.dark-syntax .function { -fx-text-fill: #cc7832; }
+.dark-syntax .bracket { -fx-text-fill: #89ddff; }
+.dark-syntax .attribute { -fx-text-fill: #c792ea; }
+.dark-syntax .variable { -fx-text-fill: #82b1ff; }
+.dark-syntax .template-variable { -fx-text-fill: #f78c6c; -fx-font-weight: bold; }
+
+/* Direct syntax highlighting without theme prefix (fallback) */
+.keyword { -fx-text-fill: #6897bb; }
+.string { -fx-text-fill: #6a8759; }
+.comment { -fx-text-fill: #808080; }
+.number { -fx-text-fill: #9876aa; }
+.operator { -fx-text-fill: #ffc66d; }
+.function { -fx-text-fill: #cc7832; }
+.bracket { -fx-text-fill: #89ddff; }
+.attribute { -fx-text-fill: #c792ea; }
+.variable { -fx-text-fill: #82b1ff; }
+.template-variable { -fx-text-fill: #f78c6c; -fx-font-weight: bold; }
+
+/* More specific selectors for CodeArea syntax highlighting */
+.code-area .keyword { -fx-fill: #6897bb !important; }
+.code-area .string { -fx-fill: #6a8759 !important; }
+.code-area .comment { -fx-fill: #808080 !important; }
+.code-area .number { -fx-fill: #9876aa !important; }
+.code-area .operator { -fx-fill: #ffc66d !important; }
+.code-area .function { -fx-fill: #cc7832 !important; }
+.code-area .bracket { -fx-fill: #89ddff !important; }
+.code-area .attribute { -fx-fill: #c792ea !important; }
+.code-area .variable { -fx-fill: #82b1ff !important; }
+.code-area .template-variable { -fx-fill: #f78c6c !important; -fx-font-weight: bold; }
+
+/* Text elements inside CodeArea */
+.code-area .text.keyword { -fx-fill: #6897bb !important; }
+.code-area .text.string { -fx-fill: #6a8759 !important; }
+.code-area .text.comment { -fx-fill: #808080 !important; }
+.code-area .text.number { -fx-fill: #9876aa !important; }
+.code-area .text.operator { -fx-fill: #ffc66d !important; }
+.code-area .text.function { -fx-fill: #cc7832 !important; }
+.code-area .text.bracket { -fx-fill: #89ddff !important; }
+.code-area .text.attribute { -fx-fill: #c792ea !important; }
+.code-area .text.variable { -fx-fill: #82b1ff !important; }
+.code-area .text.template-variable { -fx-fill: #f78c6c !important; -fx-font-weight: bold; } 
